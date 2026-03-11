@@ -76,6 +76,36 @@
       </dependency>
       <dependency>
         <groupId>cn.intentforge</groupId>
+        <artifactId>intentforge-prompt-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>cn.intentforge</groupId>
+        <artifactId>intentforge-prompt-local</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>cn.intentforge</groupId>
+        <artifactId>intentforge-model-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>cn.intentforge</groupId>
+        <artifactId>intentforge-model-local</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>cn.intentforge</groupId>
+        <artifactId>intentforge-model-provider-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>cn.intentforge</groupId>
+        <artifactId>intentforge-model-provider-local</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>cn.intentforge</groupId>
         <artifactId>intentforge-tool-core</artifactId>
         <version>${project.version}</version>
       </dependency>

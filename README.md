@@ -37,6 +37,7 @@ It is an **AI-Native Development Platform**.
 
 - governance: responsible for governance
 - agent: responsible for reasoning
+- prompt/model/model-provider: responsible for prompt assets, model catalogs, and provider pluggability
 - tool: responsible for execution
 - memory/config: responsible for contextual data
 - audit: responsible for traceability
@@ -55,6 +56,15 @@ intentforge/
 │  ├─ intentforge-agent-native             # Native in-house coding agent implementation
 │  ├─ intentforge-agent-springai           # Executor implementation based on Spring AI
 │  └─ intentforge-agent-external           # External agent adapters: opencode / codex / gemini / agentscope, etc.
+├─ intentforge-prompt                      # Prompt aggregation module
+│  ├─ intentforge-prompt-core              # Prompt definitions, variables, queries, registry SPI
+│  └─ intentforge-prompt-local             # In-memory prompt manager, classpath SPI loading, local plugin directory loading
+├─ intentforge-model                       # Model aggregation module
+│  ├─ intentforge-model-core               # Model descriptors, capabilities, selection criteria, registry SPI
+│  └─ intentforge-model-local              # In-memory model manager, classpath SPI loading, local plugin directory loading
+├─ intentforge-model-provider              # Model provider aggregation module
+│  ├─ intentforge-model-provider-core      # Provider descriptors, provider SPI, provider registry contracts
+│  └─ intentforge-model-provider-local     # In-memory provider registry, local plugin loading, metadata/version validation
 ├─ intentforge-tool                        # Tool aggregation module
 │  ├─ intentforge-tool-core                # Tool SPI, ToolGateway, permission model, tool registry
 │  ├─ intentforge-tool-mcp                 # MCP protocol integration and MCP tool bridging

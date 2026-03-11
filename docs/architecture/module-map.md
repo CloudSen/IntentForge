@@ -4,6 +4,7 @@
 
 - `governance` 负责管
 - `agent` 负责想
+- `prompt/model/model-provider` 负责定义提示词、模型目录与模型提供方能力面
 - `tool` 负责做
 - `memory/config` 负责提供上下文
 - `audit` 负责留痕
@@ -20,6 +21,9 @@
 | `intentforge-governance` | Task orchestration, state machine, routing, strategy, coordination, scheduling |
 | `intentforge-audit` | Run/step/tool-call records, event snapshots, replay, audit services |
 | `intentforge-agent` | Agent abstraction family and runtime integrations |
+| `intentforge-prompt` | Prompt definitions, registries, and pluggable prompt runtime |
+| `intentforge-model` | Model catalogs, capability metadata, and pluggable model runtime |
+| `intentforge-model-provider` | Model provider SPI, provider registries, and pluggable provider adapters |
 | `intentforge-tool` | Tool SPI, connectors, execution, validation |
 | `intentforge-memory` | Memory abstractions and implementations |
 | `intentforge-config` | Config abstractions and layered providers |
@@ -36,6 +40,27 @@
 | `intentforge-agent-native` | Native planner, coder, reviewer, judge implementations |
 | `intentforge-agent-springai` | Spring AI based chat, advisor, and tool execution adapters |
 | `intentforge-agent-external` | External runtime adapters such as Codex, Gemini, AgentScope |
+
+### `intentforge-prompt`
+
+| Module | Role |
+| --- | --- |
+| `intentforge-prompt-core` | Prompt definitions, variables, queries, registry SPI |
+| `intentforge-prompt-local` | In-memory prompt manager, classpath SPI loading, local plugin directory loading |
+
+### `intentforge-model`
+
+| Module | Role |
+| --- | --- |
+| `intentforge-model-core` | Model descriptors, capability catalog, registry SPI |
+| `intentforge-model-local` | In-memory model manager, classpath SPI loading, local plugin directory loading |
+
+### `intentforge-model-provider`
+
+| Module | Role |
+| --- | --- |
+| `intentforge-model-provider-core` | Provider descriptors, provider SPI, provider registry contracts |
+| `intentforge-model-provider-local` | In-memory provider registry, local plugin loading, metadata and version validation |
 
 ### `intentforge-tool`
 
@@ -90,4 +115,3 @@
 | `frontend/ui` | Shared frontend UI assets and component placeholder |
 | `python/runtime` | Python runtime utilities and future bridge placeholder |
 | `scripts` | Development and automation script placeholder |
-

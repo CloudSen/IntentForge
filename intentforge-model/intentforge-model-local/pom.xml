@@ -6,29 +6,24 @@
 
   <parent>
     <groupId>cn.intentforge</groupId>
-    <artifactId>intentforge-boot</artifactId>
+    <artifactId>intentforge-model</artifactId>
     <version>${revision}</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>intentforge-boot-local</artifactId>
-  <name>IntentForge Boot Local</name>
-  <description>Local-first startup entrypoint and bootstrap wiring.</description>
+  <artifactId>intentforge-model-local</artifactId>
+  <name>IntentForge Model Local</name>
+  <description>In-memory model manager and local plugin directory runtime.</description>
 
   <dependencies>
     <dependency>
       <groupId>cn.intentforge</groupId>
-      <artifactId>intentforge-prompt-local</artifactId>
+      <artifactId>intentforge-common</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>cn.intentforge</groupId>
-      <artifactId>intentforge-model-local</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>cn.intentforge</groupId>
-      <artifactId>intentforge-model-provider-local</artifactId>
+      <artifactId>intentforge-model-core</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>

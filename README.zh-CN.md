@@ -37,6 +37,7 @@ IntentForge 不是聊天壳，
 
 - governance：负责管
 - agent：负责想
+- prompt/model/model-provider：负责提示词资产、模型目录和提供方可插拔能力面
 - tool：负责做
 - memory/config：负责提供上下文
 - audit：负责留痕
@@ -55,6 +56,15 @@ intentforge/
 │  ├─ intentforge-agent-native             # 自研原生 coding agent 实现
 │  ├─ intentforge-agent-springai           # 基于 Spring AI 的执行器实现
 │  └─ intentforge-agent-external           # 外部 agent 适配器：opencode/codex/gemini/agentscope 等
+├─ intentforge-prompt                      # 提示词聚合模块
+│  ├─ intentforge-prompt-core              # 提示词定义、变量、查询条件、注册中心 SPI
+│  └─ intentforge-prompt-local             # 内存提示词管理、classpath SPI 加载、本地 plugins 目录加载
+├─ intentforge-model                       # 模型聚合模块
+│  ├─ intentforge-model-core               # 模型描述、能力标签、选择条件、注册中心 SPI
+│  └─ intentforge-model-local              # 内存模型管理、classpath SPI 加载、本地 plugins 目录加载
+├─ intentforge-model-provider              # 模型提供方聚合模块
+│  ├─ intentforge-model-provider-core      # Provider 描述、Provider SPI、Provider 注册中心约定
+│  └─ intentforge-model-provider-local     # 内存 Provider 注册、本地插件加载、元数据/版本校验
 ├─ intentforge-tool                        # 工具聚合模块
 │  ├─ intentforge-tool-core                # Tool SPI、ToolGateway、权限模型、工具注册中心
 │  ├─ intentforge-tool-mcp                 # MCP 协议接入与 MCP 工具桥接

@@ -1,0 +1,17 @@
+package cn.intentforge.model.catalog;
+
+public enum ModelCapability {
+  CHAT,
+  TOOL_CALLING,
+  REASONING,
+  STREAMING,
+  JSON_OUTPUT,
+  STRUCTURED_OUTPUT,
+  EMBEDDING,
+  IMAGE_GENERATION,
+  VISION,
+  AUDIO_INPUT,
+  AUDIO_OUTPUT,
+  RERANKING,
+  MODERATION
+}
