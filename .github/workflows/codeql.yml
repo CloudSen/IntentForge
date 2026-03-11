@@ -17,8 +17,28 @@ permissions:
   security-events: write
 
 jobs:
+  detect-java:
+    name: Detect Java sources
+    runs-on: ubuntu-latest
+    outputs:
+      has_java: ${{ steps.scan.outputs.has_java }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Scan repository
+        id: scan
+        run: |
+          if find . -type f \( -name '*.java' -o -name '*.kt' \) | grep -q .; then
+            echo "has_java=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_java=false" >> "$GITHUB_OUTPUT"
+          fi
+
   analyze:
     name: Analyze (${{ matrix.language }})
+    needs: detect-java
+    if: needs.detect-java.outputs.has_java == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -28,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -38,4 +58,3 @@ jobs:
 
       - name: Analyze
         uses: github/codeql-action/analyze@v4
-

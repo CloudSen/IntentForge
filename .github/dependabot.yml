@@ -7,6 +7,19 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 2
+    groups:
+      spring-platform:
+        patterns:
+          - "org.springframework.ai:*"
+          - "org.springframework.boot:*"
+      maven-build-plugins:
+        patterns:
+          - "org.apache.maven.plugins:*"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-dependencies"
+        update-types:
+          - "version-update:semver-major"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -14,4 +27,8 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "Asia/Shanghai"
-
+    open-pull-requests-limit: 1
+    groups:
+      github-actions:
+        patterns:
+          - "*"
