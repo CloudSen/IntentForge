@@ -21,7 +21,7 @@
     <spring.boot.version>3.5.11</spring.boot.version>
     <spring.ai.version>1.1.1</spring.ai.version>
 
-    <maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
+    <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
     <maven.surefire.plugin.version>3.5.2</maven.surefire.plugin.version>
     <maven.enforcer.plugin.version>3.5.0</maven.enforcer.plugin.version>
     <flatten.maven.plugin.version>1.7.3</flatten.maven.plugin.version>
