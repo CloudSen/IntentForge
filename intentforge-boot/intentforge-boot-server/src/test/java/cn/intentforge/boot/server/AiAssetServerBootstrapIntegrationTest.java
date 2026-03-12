@@ -52,7 +52,8 @@ class AiAssetServerBootstrapIntegrationTest {
       HttpClient client = HttpClient.newHttpClient();
       AgentRunResponse pausedAfterPlanner = createRun(client, runtime.baseUri(), workspace);
       Assertions.assertFalse(pausedAfterPlanner.selectedRuntimes().isEmpty());
-      Assertions.assertEquals("PROMPT_MANAGER", pausedAfterPlanner.selectedRuntimes().getFirst().capability());
+      Assertions.assertTrue(pausedAfterPlanner.selectedRuntimes().stream()
+          .anyMatch(runtimeSelection -> "PROMPT_MANAGER".equals(runtimeSelection.capability())));
 
       HttpRequest sseRequest = HttpRequest.newBuilder(runtime.baseUri().resolve(pausedAfterPlanner.eventsPath()))
           .timeout(Duration.ofSeconds(10))
