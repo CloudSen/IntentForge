@@ -1,7 +1,7 @@
-# Task: Native Java Coding Agent Event-Driven Run Model
+# Task: Native Java Coding Agent Config-Driven Runtime Selection
 
 ## Requirement
-Starting from the completed event-driven native Java coding agent runtime, extend the MVP with the minimum API and boot-server chain required to run the agent from a terminal through a real server entrypoint. The next phase must preserve the existing run lifecycle while adding transport contracts, server bootstrap wiring, and a minimal HTTP/SSE flow that can create a run, observe run events, send user feedback, and cancel the run. API request handling threads should prefer virtual threads unless a concrete blocker is discovered and recorded.
+Starting from the completed event-driven native Java coding agent runtime and minimal API/server chain, replace the current bootstrap-time hardcoded runtime selection with a configuration-driven architecture. SPI should only define which implementations are available. User-facing configuration stored in the `config` module should define which capabilities and implementations are bound to each space, including skills, agents, prompts, models, model providers, tools, memory, config providers, and related runtime selectors. `SpaceProfile` should resolve the effective runtime bindings for the current space, and every run should expose the final runtime selection through `ContextPack`, `AgentRunSnapshot`, and emitted events. The target is a durable architecture rather than an MVP-only shortcut.
 
 ## Acceptance Criteria
 - [x] `intentforge-agent-core` defines run/event/lifecycle contracts for incremental execution, user-feedback checkpoints, and resume/cancel semantics across module boundaries.
@@ -12,11 +12,18 @@ Starting from the completed event-driven native Java coding agent runtime, exten
 - [x] `intentforge-api` defines the minimum HTTP contract for run creation, event subscription, user feedback resume, and cancel operations, and the contract documentation is synchronized.
 - [x] `intentforge-boot-server` provides the minimum runnable server entrypoint that wires the existing `AgentRunGateway` into HTTP and SSE transport without duplicating governance logic, and request handling prefers virtual threads.
 - [x] A local terminal smoke path can start the server and drive one real run through HTTP/SSE end to end.
+- [ ] `intentforge-config` defines durable configuration contracts and runtime-binding models for user-managed space configuration, including selectors for prompt, model, model-provider, tool, memory, config, and related runtime capabilities.
+- [ ] `intentforge-space` evolves `SpaceProfile` and `ResolvedSpaceProfile` so that resource bindings and runtime implementation bindings are both inheritable and can be resolved from company to application level.
+- [ ] SPI discovery is used only to build the catalog of available implementations, while runtime selection is decided by resolved space configuration rather than global bootstrap hardcoding.
+- [ ] `intentforge-boot-local` and `intentforge-boot-server` assemble a runtime catalog plus per-run runtime selection flow, instead of globally preselecting one implementation for prompt/model/provider/tool/session/space.
+- [ ] `ContextPack`, `AgentRunSnapshot`, and emitted `AgentRunEvent` metadata expose the final selected runtime implementations so UI and operators can inspect which implementation the current run is using.
+- [ ] Tests cover configuration inheritance, invalid selector handling, unavailable implementation selection, runtime resolution precedence, and run-time observability of selected implementations.
+- [ ] Documentation stays synchronized with the new architecture, and all changes pass `make test`.
 
 ## Overall Status
-- status: finished
-- process: 100%
-- current_step: completed
+- status: running
+- process: 5%
+- current_step: 13
 
 ## Steps
 | step | description | status | note |
@@ -33,6 +40,11 @@ Starting from the completed event-driven native Java coding agent runtime, exten
 | 10 | Add failing tests and API contract updates for run create, SSE events, feedback resume, cancel, minimal boot-server startup flow, and preferred virtual-thread request handling | finished | commit: 8003fe9 |
 | 11 | Implement intentforge-api transport contracts and boot-server HTTP/SSE wiring on top of `AgentRunGateway`, preferring virtual threads for request processing | finished | commit: e6495f1 |
 | 12 | Update docs, verify terminal smoke flow and full test suite, sync task bookkeeping, and finalize API/server checkpoints | finished | commit: fd7e884 |
+| 13 | Re-scope the finished API/server chain to config-driven runtime selection and record the new architecture baseline | in_progress | commit: pending |
+| 14 | Add red tests and core contracts for config-managed runtime binding models, space inheritance of runtime selectors, and runtime catalog discovery | notrun | commit: pending |
+| 15 | Implement config-core models, space/runtime binding resolution, and bootstrap runtime catalog assembly without global hardcoded implementation winners | notrun | commit: pending |
+| 16 | Propagate selected runtime bindings into governance, context pack, run snapshot, events, and API-facing observability models | notrun | commit: pending |
+| 17 | Update architecture/docs, run full verification, sync task bookkeeping, and finalize the configuration-driven runtime-selection architecture | notrun | commit: pending |
 
 ## Update Log
 | time | status | process | update |
@@ -59,6 +71,7 @@ Starting from the completed event-driven native Java coding agent runtime, exten
 | 2026-03-12 22:04:27 +0800 | running | 70% | implemented minimal HTTP DTOs in `intentforge-api`, JDK `HttpServer` + SSE transport in `boot-server`, virtual-thread request executor wiring, and a terminal-startable demo main; targeted reactor tests now pass for the API and server modules |
 | 2026-03-12 22:06:22 +0800 | finished | 100% | updated architecture and module docs, verified a real terminal smoke flow through `AiAssetServerMain` using `curl` for create, SSE replay/live events, resume, and completion, and passed the full `make test` reactor |
 | 2026-03-12 22:06:55 +0800 | finished | 100% | task bookkeeping synchronized after docs checkpoint `fd7e884`; the minimal API + boot-server chain is fully closed with virtual-thread-backed request handling |
+| 2026-03-12 23:31:39 +0800 | running | 5% | scope changed again: reopen the completed API/server chain toward a configuration-driven architecture where SPI only declares available implementations, `config` stores user-facing space configuration, `SpaceProfile` resolves runtime bindings, and run-time artifacts expose the final selected implementations |
 
 ## Sequence Diagram
 
