@@ -1,6 +1,6 @@
 # AGENTS.md
 
-## Read docs before coding
+## Read docs before coding, Update docs after finish work
 Read relevant documents in `docs/` before making changes:
 
 - `docs/architecture/module-map.md` — system architecture, module boundaries, package structure
