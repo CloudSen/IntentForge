@@ -1,7 +1,7 @@
 # Task: Native Java Coding Agent Event-Driven Run Model
 
 ## Requirement
-Starting from the completed event-driven native Java coding agent runtime, extend the MVP with the minimum API and boot-server chain required to run the agent from a terminal through a real server entrypoint. The next phase must preserve the existing run lifecycle while adding transport contracts, server bootstrap wiring, and a minimal HTTP/SSE flow that can create a run, observe run events, send user feedback, and cancel the run.
+Starting from the completed event-driven native Java coding agent runtime, extend the MVP with the minimum API and boot-server chain required to run the agent from a terminal through a real server entrypoint. The next phase must preserve the existing run lifecycle while adding transport contracts, server bootstrap wiring, and a minimal HTTP/SSE flow that can create a run, observe run events, send user feedback, and cancel the run. API request handling threads should prefer virtual threads unless a concrete blocker is discovered and recorded.
 
 ## Acceptance Criteria
 - [x] `intentforge-agent-core` defines run/event/lifecycle contracts for incremental execution, user-feedback checkpoints, and resume/cancel semantics across module boundaries.
@@ -10,7 +10,7 @@ Starting from the completed event-driven native Java coding agent runtime, exten
 - [x] `intentforge-boot-local` exposes the event-driven runtime entry needed to start, observe, and continue a run without requiring a future API transport first.
 - [x] Unit and integration tests cover normal, boundary, invalid input, pause/resume, cancel, and exception paths, and `make test` passes without warnings or errors.
 - [ ] `intentforge-api` defines the minimum HTTP contract for run creation, event subscription, user feedback resume, and cancel operations, and the contract documentation is synchronized.
-- [ ] `intentforge-boot-server` provides the minimum runnable server entrypoint that wires the existing `AgentRunGateway` into HTTP and SSE transport without duplicating governance logic.
+- [ ] `intentforge-boot-server` provides the minimum runnable server entrypoint that wires the existing `AgentRunGateway` into HTTP and SSE transport without duplicating governance logic, and request handling prefers virtual threads.
 - [ ] A local terminal smoke path can start the server and drive one real run through HTTP/SSE end to end.
 
 ## Overall Status
@@ -30,8 +30,8 @@ Starting from the completed event-driven native Java coding agent runtime, exten
 | 7 | Implement agent-core run/event contracts, governance orchestrator, native feedback loop, and boot-local event-driven wiring | finished | commit: e81d513 |
 | 8 | Update docs, run full verification, sync task bookkeeping, and finalize event-driven checkpoints | finished | commits: e81d513, 87e6526 |
 | 9 | Re-scope the completed event-driven runtime to include the minimum API and boot-server chain and preserve the recovery baseline | finished | commit: 3d6a9e8 |
-| 10 | Add failing tests and API contract updates for run create, SSE events, feedback resume, cancel, and minimal boot-server startup flow | notrun | commit: pending |
-| 11 | Implement intentforge-api transport contracts and boot-server HTTP/SSE wiring on top of `AgentRunGateway` | notrun | commit: pending |
+| 10 | Add failing tests and API contract updates for run create, SSE events, feedback resume, cancel, minimal boot-server startup flow, and preferred virtual-thread request handling | notrun | commit: pending |
+| 11 | Implement intentforge-api transport contracts and boot-server HTTP/SSE wiring on top of `AgentRunGateway`, preferring virtual threads for request processing | notrun | commit: pending |
 | 12 | Update docs, verify terminal smoke flow and full test suite, sync task bookkeeping, and finalize API/server checkpoints | notrun | commit: pending |
 
 ## Update Log
@@ -52,3 +52,4 @@ Starting from the completed event-driven native Java coding agent runtime, exten
 | 2026-03-12 21:01:21 +0800 | finished | 100% | task bookkeeping synchronized after docs checkpoint `87e6526`; event-driven multi-turn run model is fully closed |
 | 2026-03-12 21:44:12 +0800 | running | 10% | scope changed again: reopen the finished event-driven runtime task to add the minimum API and boot-server chain needed for terminal real calls; current gap is that `boot-server` is still a placeholder and there is no HTTP/SSE transport layer yet |
 | 2026-03-12 21:44:33 +0800 | running | 15% | scope-change checkpoint `3d6a9e8` recorded; next execution step is to add red tests and minimal API contracts for the server chain |
+| 2026-03-12 21:51:03 +0800 | running | 15% | scope refined: the API/server phase must prefer virtual threads for request handling unless a concrete blocker is found and recorded during implementation |
