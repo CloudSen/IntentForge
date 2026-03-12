@@ -120,7 +120,7 @@
 | Module | Role |
 | --- | --- |
 | `intentforge-boot-local` | Local-first bootstrap, local storage initialization, space/session-aware runtime wiring, native agent gateway assembly, and local exposure of both synchronous and event-driven run entrypoints |
-| `intentforge-boot-server` | Minimal JDK `HttpServer` bootstrap, HTTP/SSE transport wiring, virtual-thread-backed request execution, and terminal demo entrypoint |
+| `intentforge-boot-server` | Minimal JDK `HttpServer` bootstrap, HTTP/SSE transport wiring, virtual-thread-backed request execution, and terminal server entrypoint |
 
 ### `intentforge-desktop`
 

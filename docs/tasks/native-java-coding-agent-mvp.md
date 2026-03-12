@@ -77,8 +77,8 @@ sequenceDiagram
     participant Reviewer as NativeReviewerAgent
     participant Tool as ToolGateway
 
-    User->>Main: start demo server
-    Main->>Server: bootstrap(host, port, plugins, seeders)
+    User->>Main: start server
+    Main->>Server: bootstrap(host, port, plugins, null, null)
     Server->>Local: bootstrap local runtime
     Server->>Api: wire HTTP + SSE handlers
 

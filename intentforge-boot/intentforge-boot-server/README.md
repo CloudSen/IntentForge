@@ -6,9 +6,9 @@ Current implementation:
 - JDK `HttpServer`
 - HTTP JSON endpoints + SSE event stream
 - request handling prefers virtual threads
-- terminal demo main: `cn.intentforge.boot.server.AiAssetServerMain`
+- terminal main: `cn.intentforge.boot.server.AiAssetServerMain`
 
-Demo startup:
+Minimal startup:
 
 ```bash
 cd /Users/clouds3n/Coding/open-source/ai/intent-forge
@@ -27,6 +27,10 @@ java -Dintentforge.server.port=18080 \
   cn.intentforge.boot.server.AiAssetServerMain
 ```
 
-Demo defaults printed on startup:
+Startup output includes:
 - base URL like `http://127.0.0.1:18080`
-- demo `sessionId=session-1`
+- create run endpoint path
+- request handling prefers virtual threads
+- no runtime seed data is preloaded by the main entrypoint
+
+For end-to-end demo data, use the integration fixtures under `src/test/java`.
