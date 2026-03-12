@@ -9,14 +9,14 @@ Starting from the completed event-driven native Java coding agent runtime, exten
 - [x] `intentforge-agent-native` adapts planner/coder/reviewer execution to the new run lifecycle and preserves multi-turn context across turns.
 - [x] `intentforge-boot-local` exposes the event-driven runtime entry needed to start, observe, and continue a run without requiring a future API transport first.
 - [x] Unit and integration tests cover normal, boundary, invalid input, pause/resume, cancel, and exception paths, and `make test` passes without warnings or errors.
-- [ ] `intentforge-api` defines the minimum HTTP contract for run creation, event subscription, user feedback resume, and cancel operations, and the contract documentation is synchronized.
-- [ ] `intentforge-boot-server` provides the minimum runnable server entrypoint that wires the existing `AgentRunGateway` into HTTP and SSE transport without duplicating governance logic, and request handling prefers virtual threads.
-- [ ] A local terminal smoke path can start the server and drive one real run through HTTP/SSE end to end.
+- [x] `intentforge-api` defines the minimum HTTP contract for run creation, event subscription, user feedback resume, and cancel operations, and the contract documentation is synchronized.
+- [x] `intentforge-boot-server` provides the minimum runnable server entrypoint that wires the existing `AgentRunGateway` into HTTP and SSE transport without duplicating governance logic, and request handling prefers virtual threads.
+- [x] A local terminal smoke path can start the server and drive one real run through HTTP/SSE end to end.
 
 ## Overall Status
-- status: running
-- process: 70%
-- current_step: 12
+- status: finished
+- process: 100%
+- current_step: completed
 
 ## Steps
 | step | description | status | note |
@@ -31,8 +31,8 @@ Starting from the completed event-driven native Java coding agent runtime, exten
 | 8 | Update docs, run full verification, sync task bookkeeping, and finalize event-driven checkpoints | finished | commits: e81d513, 87e6526 |
 | 9 | Re-scope the completed event-driven runtime to include the minimum API and boot-server chain and preserve the recovery baseline | finished | commits: 3d6a9e8, 1428797 |
 | 10 | Add failing tests and API contract updates for run create, SSE events, feedback resume, cancel, minimal boot-server startup flow, and preferred virtual-thread request handling | finished | commit: 8003fe9 |
-| 11 | Implement intentforge-api transport contracts and boot-server HTTP/SSE wiring on top of `AgentRunGateway`, preferring virtual threads for request processing | finished | commit: pending |
-| 12 | Update docs, verify terminal smoke flow and full test suite, sync task bookkeeping, and finalize API/server checkpoints | running | commit: pending |
+| 11 | Implement intentforge-api transport contracts and boot-server HTTP/SSE wiring on top of `AgentRunGateway`, preferring virtual threads for request processing | finished | commit: e6495f1 |
+| 12 | Update docs, verify terminal smoke flow and full test suite, sync task bookkeeping, and finalize API/server checkpoints | finished | commit: pending |
 
 ## Update Log
 | time | status | process | update |
@@ -57,3 +57,72 @@ Starting from the completed event-driven native Java coding agent runtime, exten
 | 2026-03-12 21:57:35 +0800 | running | 20% | step 10 started; current repo has no `docs/api-spec.yaml`, no HTTP DTOs in `intentforge-api`, and no runnable `boot-server`, so the next checkpoint will add red tests plus the first minimal OpenAPI contract for create, events, feedback, cancel, and virtual-thread-backed server startup |
 | 2026-03-12 22:00:33 +0800 | running | 35% | added red tests for HTTP DTOs, boot-server HTTP/SSE lifecycle, cancel, and virtual-thread executor preference, and created the first `docs/api-spec.yaml`; targeted build fails at missing API transport models and server bootstrap classes as expected |
 | 2026-03-12 22:04:27 +0800 | running | 70% | implemented minimal HTTP DTOs in `intentforge-api`, JDK `HttpServer` + SSE transport in `boot-server`, virtual-thread request executor wiring, and a terminal-startable demo main; targeted reactor tests now pass for the API and server modules |
+| 2026-03-12 22:06:22 +0800 | finished | 100% | updated architecture and module docs, verified a real terminal smoke flow through `AiAssetServerMain` using `curl` for create, SSE replay/live events, resume, and completion, and passed the full `make test` reactor |
+
+## Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    actor User as Terminal User
+    participant Main as AiAssetServerMain
+    participant Server as AiAssetServerBootstrap
+    participant Local as AiAssetLocalBootstrap
+    participant Api as AgentRunHttpApi
+    participant Broker as AgentRunEventBroker
+    participant Gateway as DefaultAgentRunGateway
+    participant Router as StageRoutingAgentRouter
+    participant Planner as NativePlannerAgent
+    participant Coder as NativeCoderAgent
+    participant Reviewer as NativeReviewerAgent
+    participant Tool as ToolGateway
+
+    User->>Main: start demo server
+    Main->>Server: bootstrap(host, port, plugins, seeders)
+    Server->>Local: bootstrap local runtime
+    Server->>Api: wire HTTP + SSE handlers
+
+    User->>Api: POST /api/agent-runs
+    Api->>Gateway: start(task, Broker::publish)
+    Gateway->>Router: route(task, context, agents)
+    Gateway->>Planner: execute(context, state0)
+    Planner-->>Gateway: plan + decision
+    Gateway-->>Broker: RUN_CREATED..AWAITING_USER
+    Api-->>User: 201 AgentRunResponse
+
+    User->>Api: GET /api/agent-runs/{runId}/events
+    Api-->>User: replay historical SSE events
+
+    User->>Api: POST /api/agent-runs/{runId}/messages
+    Api->>Gateway: resume(runId, feedback, Broker::publish)
+    Gateway->>Coder: execute(context, state1)
+    Coder->>Tool: fs/env tool calls
+    Tool-->>Coder: tool results
+    Coder-->>Gateway: artifact + decision
+    Gateway-->>Broker: USER_FEEDBACK_RECEIVED..AWAITING_USER
+    Broker-->>User: live SSE events
+    Api-->>User: 200 AgentRunResponse
+
+    User->>Api: POST /api/agent-runs/{runId}/messages
+    Api->>Gateway: resume(runId, feedback, Broker::publish)
+    Gateway->>Reviewer: execute(context, state2)
+    Reviewer-->>Gateway: review artifact + decision
+    Gateway-->>Broker: USER_FEEDBACK_RECEIVED..RUN_COMPLETED
+    Broker-->>User: live SSE events
+    Api-->>User: 200 AgentRunResponse
+```
+
+## Module Relationship Diagram
+
+```mermaid
+flowchart LR
+    Client[Terminal Client or curl] --> Api[intentforge-boot-server]
+    Api --> Dto[intentforge-api]
+    Api --> Local[intentforge-boot-local]
+    Api --> Gov[intentforge-governance]
+    Gov --> Core[intentforge-agent-core]
+    Gov --> Native[intentforge-agent-native]
+    Native --> Tool[intentforge-tool]
+    Gov --> Session[intentforge-session]
+    Gov --> Space[intentforge-space]
+    Gov --> PromptModel[prompt model provider]
+```
