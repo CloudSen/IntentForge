@@ -12,15 +12,15 @@ Implement an MVP native Java coding agent that connects the existing session, sp
 
 ## Overall Status
 - status: running
-- process: 25%
-- current_step: 2
+- process: 75%
+- current_step: 3
 
 ## Steps
 | step | description | status | note |
 | --- | --- | --- | --- |
 | 1 | Create progress file, inspect architecture/spec docs, inspect existing agent/governance/boot runtime, and verify git checkpoint capability | finished | commit: bd46a0c |
-| 2 | Add failing tests for agent contracts, routing/orchestration, native execution, and local bootstrap integration | running | commit: pending |
-| 3 | Implement agent core abstractions, governance router/gateway, native MVP execution flow, and boot wiring | notrun | commit: pending |
+| 2 | Add failing tests for agent contracts, routing/orchestration, native execution, and local bootstrap integration | finished | commit: 7fd06db |
+| 3 | Implement agent core abstractions, governance router/gateway, native MVP execution flow, and boot wiring | running | commit: pending |
 | 4 | Update docs, run full verification, sync task bookkeeping, and finalize checkpoints | notrun | commit: pending |
 
 ## Update Log
@@ -29,3 +29,4 @@ Implement an MVP native Java coding agent that connects the existing session, sp
 | 2026-03-12 18:29:17 +0800 | notrun | 0% | task initialized |
 | 2026-03-12 18:29:17 +0800 | running | 5% | task started; required docs inspected; current agent/governance modules are mostly placeholders; git checkpoint capability verified |
 | 2026-03-12 18:33:43 +0800 | running | 25% | finalized MVP layering: agent-core for contracts, governance for routing/gateway, agent-native for planner/coder/reviewer, boot-local for wiring; started adding red tests and module dependencies |
+| 2026-03-12 18:42:08 +0800 | running | 75% | implemented agent-core contracts, governance routing/gateway, native planner/coder/reviewer flow, and boot-local wiring; targeted reactor tests passed for the affected modules |

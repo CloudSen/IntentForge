@@ -1,5 +1,9 @@
 package cn.intentforge.boot.local;
 
+import cn.intentforge.agent.core.AgentGateway;
+import cn.intentforge.agent.nativejava.NativeCodingAgentFactory;
+import cn.intentforge.governance.agent.DefaultAgentGateway;
+import cn.intentforge.governance.agent.StageRoutingAgentRouter;
 import cn.intentforge.model.local.plugin.DirectoryModelPluginManager;
 import cn.intentforge.model.local.registry.InMemoryModelManager;
 import cn.intentforge.model.provider.local.plugin.DirectoryModelProviderPluginManager;
@@ -118,6 +122,15 @@ public final class AiAssetLocalBootstrap {
 
     DefaultToolPermissionPolicy toolPermissionPolicy = new DefaultToolPermissionPolicy(DEFAULT_SENSITIVE_TOOL_IDS);
     ToolGateway toolGateway = new DefaultToolGateway(toolRegistry, toolPermissionPolicy);
+    AgentGateway agentGateway = new DefaultAgentGateway(
+        sessionManager,
+        spaceResolver,
+        promptManager,
+        modelManager,
+        providerRegistry,
+        toolGateway,
+        new StageRoutingAgentRouter(),
+        NativeCodingAgentFactory.createDefaultExecutors(toolGateway));
 
     return new AiAssetLocalRuntime(
         promptManager,
@@ -130,6 +143,7 @@ public final class AiAssetLocalBootstrap {
         toolPluginManager,
         toolPermissionPolicy,
         toolGateway,
+        agentGateway,
         sessionManager,
         spaceRegistry,
         spaceResolver);
