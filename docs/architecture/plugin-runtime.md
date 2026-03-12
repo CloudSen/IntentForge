@@ -33,12 +33,16 @@ In addition to source plugins, manager/registry implementations can be replaced 
 - prompt manager SPI: `META-INF/services/cn.intentforge.prompt.spi.PromptManagerProvider`
 - model manager SPI: `META-INF/services/cn.intentforge.model.spi.ModelManagerProvider`
 - model-provider registry SPI: `META-INF/services/cn.intentforge.model.provider.spi.ModelProviderRegistryProvider`
+- session manager SPI: `META-INF/services/cn.intentforge.session.spi.SessionManagerProvider`
 
 Selection rule:
 
 - providers expose `priority()`
 - higher priority wins
 - same highest priority is rejected at startup
+
+`session` currently uses classpath manager SPI only and is assembled via
+`cn.intentforge.session.local.SessionLocalRuntimeFactory`.
 
 ## Plugin metadata
 

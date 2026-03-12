@@ -43,6 +43,7 @@ It is an **AI-Native Development Platform**.
 - prompt/model/model-provider: responsible for prompt assets, model catalogs, and provider pluggability
 - tool: responsible for execution
 - memory/config: responsible for contextual data
+- session: responsible for session lifecycle, conversation history, and archival queries
 - space: responsible for hierarchical isolation, multi-resource bindings, and inheritance across company/project/product/application scopes
 - audit: responsible for traceability
 - boot: responsible for startup
@@ -86,11 +87,14 @@ intentforge/
 │  ├─ intentforge-config-file              # File-based configuration: local YAML / JSON configuration
 │  ├─ intentforge-config-db                # Database configuration: runtime configuration, policy configuration, layered configuration
 │  └─ intentforge-config-graph             # Graph configuration: complex dependencies and relational rule configuration
+├─ intentforge-session                     # Session aggregation module
+│  ├─ intentforge-session-core             # Session snapshots, message models, query contracts, not-found exception, and manager-provider SPI
+│  └─ intentforge-session-local            # In-memory session manager, classpath provider selection, and local runtime assembly
 ├─ intentforge-space                       # Space aggregation module
 │  ├─ intentforge-space-core               # Space hierarchy models, resource binding profiles, SPI contracts, exceptions, and resolved profile definitions
 │  └─ intentforge-space-local              # In-memory space registry, multi-resource inheritance resolver, and local runtime assembly
 ├─ intentforge-boot                        # Boot aggregation module
-│  ├─ intentforge-boot-local               # Local mode entry: desktop local core and space-aware bootstrap
+│  ├─ intentforge-boot-local               # Local mode entry: desktop local core and space/session-aware bootstrap
 │  └─ intentforge-boot-server              # Server mode entry: remote services and platform deployment
 ├─ intentforge-desktop                     # Desktop integration module
 │  ├─ intentforge-desktop-core             # Desktop abstraction layer: IDE / terminal / directory / file integration
