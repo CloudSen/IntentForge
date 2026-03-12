@@ -12,15 +12,15 @@
 
 ## Overall Status
 - status: running
-- process: 18%
-- current_step: 2
+- process: 35%
+- current_step: 3
 
 ## Steps
 | step | description | status | note |
 | --- | --- | --- | --- |
-| 1 | 阅读现有 SPI 模块实现并明确 session 模块边界 | finished | commit: pending |
-| 2 | 先编写 session 核心行为与 SPI 选择测试基线 | running | commit: pending |
-| 3 | 完成 session core/local 实现与模块接入 | notrun | commit: pending |
+| 1 | 阅读现有 SPI 模块实现并明确 session 模块边界 | finished | commit: 77227d9 |
+| 2 | 先编写 session 核心行为与 SPI 选择测试基线 | finished | commit: pending |
+| 3 | 完成 session core/local 实现与模块接入 | running | commit: pending |
 | 4 | 更新文档并执行完整验证与收尾 | notrun | commit: pending |
 
 ## Update Log
@@ -29,3 +29,4 @@
 | 2026-03-12 15:18:00 +0800 | notrun | 0% | task initialized |
 | 2026-03-12 15:20:00 +0800 | running | 5% | task started, git checkpoint capability verified, analyzing SPI references for session module |
 | 2026-03-12 15:28:00 +0800 | running | 18% | session scope finalized: core/local split, provider SPI selection, in-memory session management, and boot-local integration |
+| 2026-03-12 17:35:00 +0800 | running | 35% | failing test baseline added for session domain models, local SPI selection, and boot-local integration |
