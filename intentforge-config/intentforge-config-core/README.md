@@ -1,4 +1,7 @@
 # intentforge-config-core
 
-Core configuration provider, resolver, and overlay abstractions.
+Core configuration contracts for:
 
+- user-managed `SpaceConfiguration`
+- persistent `SpaceConfigurationStore`
+- `RuntimeBindings`, `RuntimeCatalog`, and `ResolvedRuntimeSelection`

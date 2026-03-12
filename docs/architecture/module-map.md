@@ -20,7 +20,7 @@
 | `intentforge-bom` | Unified dependency version alignment for the repository and external consumers |
 | `intentforge-common` | Global shared enums, exceptions, constants, utils, and DTO bases |
 | `intentforge-api` | External protocol contracts, REST DTOs, SSE event payloads, AG-UI events, and request/response objects |
-| `intentforge-governance` | Task orchestration, state machine, routing, strategy, coordination, scheduling, synchronous compatibility gateway, and event-driven run orchestration |
+| `intentforge-governance` | Task orchestration, state machine, routing, strategy, coordination, scheduling, synchronous compatibility gateway, event-driven run orchestration, and per-run runtime resolution |
 | `intentforge-audit` | Run/step/tool-call records, event snapshots, replay, audit services |
 | `intentforge-agent` | Agent abstraction family, routed execution contracts, and runtime integrations |
 | `intentforge-prompt` | Prompt definitions, registries, and pluggable prompt runtime |
@@ -49,7 +49,7 @@
 
 | Module | Role |
 | --- | --- |
-| `intentforge-governance` | Default stage-based router plus synchronous and event-driven gateways that resolve session/space/prompt/model/provider/tool context, emit ordered run events, pause on `awaiting_user`, and resume or cancel the selected agent pipeline |
+| `intentforge-governance` | Default stage-based router, per-run runtime resolver contract, and synchronous or event-driven gateways that resolve session/space/runtime bindings, emit ordered run events, pause on `awaiting_user`, and resume or cancel the selected agent pipeline |
 
 ### `intentforge-prompt`
 
@@ -96,7 +96,7 @@
 
 | Module | Role |
 | --- | --- |
-| `intentforge-config-core` | `ConfigProvider`, `ConfigResolver`, overlay, config query models |
+| `intentforge-config-core` | `SpaceConfiguration`, `SpaceConfigurationStore`, `RuntimeBindings`, `RuntimeCatalog`, `ResolvedRuntimeSelection`, and config query models |
 | `intentforge-config-file` | YAML/JSON local config loading and override |
 | `intentforge-config-db` | Runtime and policy config persistence |
 | `intentforge-config-graph` | Complex dependency and relation-driven config |
@@ -119,7 +119,7 @@
 
 | Module | Role |
 | --- | --- |
-| `intentforge-boot-local` | Local-first bootstrap, local storage initialization, space/session-aware runtime wiring, native agent gateway assembly, and local exposure of both synchronous and event-driven run entrypoints |
+| `intentforge-boot-local` | Local-first bootstrap, SPI runtime catalog discovery, runtime component registry assembly, space-aware per-run runtime selection, native agent gateway assembly, and local exposure of both synchronous and event-driven run entrypoints |
 | `intentforge-boot-server` | Minimal JDK `HttpServer` bootstrap, HTTP/SSE transport wiring, virtual-thread-backed request execution, and terminal server entrypoint |
 
 ### `intentforge-desktop`

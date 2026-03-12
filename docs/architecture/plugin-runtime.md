@@ -37,9 +37,11 @@ In addition to source plugins, manager/registry implementations can be replaced 
 
 Selection rule:
 
-- providers expose `priority()`
-- higher priority wins
-- same highest priority is rejected at startup
+- SPI only declares which implementations are available
+- bootstrap instantiates discovered implementations and builds `RuntimeCatalog`
+- `SpaceProfile.runtimeBindings` selects the effective prompt/model/provider/tool runtime per run
+- if a capability has only one implementation, or one implementation marked with metadata `default=true`, it can be used as the default fallback when the space does not bind it explicitly
+- bootstrap-scoped capabilities such as the session manager still resolve once at bootstrap and are exposed in run observability data
 
 `session` currently uses classpath manager SPI only and is assembled via
 `cn.intentforge.session.local.SessionLocalRuntimeFactory`.

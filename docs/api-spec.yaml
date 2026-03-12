@@ -208,6 +208,7 @@ components:
         - status
         - nextStepIndex
         - eventsPath
+        - selectedRuntimes
         - events
       properties:
         runId:
@@ -245,11 +246,47 @@ components:
           type: string
           description: Relative SSE path used to subscribe to run events.
           example: /api/agent-runs/agent-run-1/events
+        selectedRuntimes:
+          type: array
+          description: Runtime implementations selected for the current run.
+          items:
+            $ref: '#/components/schemas/RuntimeImplementationResponse'
         events:
           type: array
           description: Ordered run events known at the time of the response.
           items:
             $ref: '#/components/schemas/AgentRunEventResponse'
+    RuntimeImplementationResponse:
+      type: object
+      description: One runtime implementation selected for the current run.
+      required:
+        - id
+        - capability
+        - displayName
+        - implementationClass
+        - metadata
+      properties:
+        id:
+          type: string
+          description: Stable runtime implementation identifier.
+          example: intentforge.prompt.manager.in-memory
+        capability:
+          type: string
+          description: Runtime capability name.
+          example: PROMPT_MANAGER
+        displayName:
+          type: string
+          description: Human-readable implementation name.
+          example: In-Memory Prompt Manager
+        implementationClass:
+          type: string
+          description: Concrete implementation class name.
+          example: cn.intentforge.prompt.local.registry.InMemoryPromptManager
+        metadata:
+          type: object
+          description: Additional implementation metadata.
+          additionalProperties:
+            type: string
     AgentRunEventResponse:
       type: object
       description: One run event payload used in HTTP responses and SSE data blocks.

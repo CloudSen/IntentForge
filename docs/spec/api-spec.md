@@ -31,6 +31,7 @@ The source of truth for all HTTP API contracts is:
 - Success and error responses must be explicitly documented.
 - Do not rely on implicit response structures.
 - `4xx` and `5xx` responses should have defined payload schemas where applicable.
+- Long-running run responses should expose observable runtime-selection data when implementation choice affects execution.
 
 ## Naming conventions
 
