@@ -20,3 +20,4 @@ Read relevant documents in `docs/` before making changes:
 - Cover normal cases, boundary cases, edge cases, invalid input, and exception cases
 - Run `./mvnw test` before finishing
 - no warning, no error
+- must commit git changes when task finish
