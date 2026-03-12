@@ -18,6 +18,9 @@ Read relevant documents in `docs/` before making changes:
 - Write Javadoc for all public types and methods
 - Follow TDD
 - Cover normal cases, boundary cases, edge cases, invalid input, and exception cases
-- Run `./mvnw test` before finishing
+- Run `make test` before finishing
 - no warning, no error
 - must commit git changes when task finish
+- Do not prepend any extra namespace or prefix unless the user explicitly requests it.
+- If runtime or agent environment rules conflict with repository branch naming rules, do not create or rename branches automatically.
+- In that case, report the conflict explicitly and wait for user decision.

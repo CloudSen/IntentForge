@@ -14,4 +14,19 @@
   <artifactId>intentforge-tool-fs</artifactId>
   <name>IntentForge Tool FS</name>
   <description>Filesystem operations, diff, patch, snapshot, and sandbox helpers.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>cn.intentforge</groupId>
+      <artifactId>intentforge-tool-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.12.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>

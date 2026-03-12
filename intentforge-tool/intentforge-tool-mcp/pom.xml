@@ -14,4 +14,19 @@
   <artifactId>intentforge-tool-mcp</artifactId>
   <name>IntentForge Tool MCP</name>
   <description>MCP client, server, and protocol adaptation layer.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>cn.intentforge</groupId>
+      <artifactId>intentforge-tool-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.12.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 </project>

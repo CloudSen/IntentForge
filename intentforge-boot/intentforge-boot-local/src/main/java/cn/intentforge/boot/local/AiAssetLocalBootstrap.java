@@ -12,6 +12,14 @@ import cn.intentforge.prompt.local.plugin.DirectoryPromptPluginManager;
 import cn.intentforge.prompt.local.registry.InMemoryPromptManager;
 import cn.intentforge.prompt.registry.PromptManager;
 import cn.intentforge.prompt.spi.PromptManagerProvider;
+import cn.intentforge.tool.core.gateway.DefaultToolGateway;
+import cn.intentforge.tool.core.gateway.ToolGateway;
+import cn.intentforge.tool.core.local.plugin.DirectoryToolPluginManager;
+import cn.intentforge.tool.core.permission.DefaultToolPermissionPolicy;
+import cn.intentforge.tool.core.permission.ToolPermissionPolicy;
+import cn.intentforge.tool.core.registry.InMemoryToolRegistry;
+import cn.intentforge.tool.core.registry.ToolRegistry;
+import cn.intentforge.tool.core.spi.ToolRegistryProvider;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +37,14 @@ public final class AiAssetLocalBootstrap {
    * Default plugin directory path.
    */
   public static final Path DEFAULT_PLUGIN_DIRECTORY = Path.of("plugins");
+  private static final List<String> DEFAULT_SENSITIVE_TOOL_IDS = List.of(
+      "intentforge.shell.exec",
+      "intentforge.fs.write",
+      "intentforge.fs.edit",
+      "intentforge.fs.apply-patch",
+      "intentforge.web.fetch",
+      "intentforge.web.search",
+      "intentforge.flow.task.dispatch");
 
   private AiAssetLocalBootstrap() {
   }
@@ -69,13 +85,26 @@ public final class AiAssetLocalBootstrap {
         new DirectoryModelProviderPluginManager(pluginsDirectory, providerRegistry, modelManager);
     providerPluginManager.loadAll();
 
+    ToolRegistry toolRegistry = createToolRegistry(classLoader);
+    toolRegistry.loadPlugins();
+    DirectoryToolPluginManager toolPluginManager =
+        new DirectoryToolPluginManager(pluginsDirectory, toolRegistry);
+    toolPluginManager.loadAll();
+
+    DefaultToolPermissionPolicy toolPermissionPolicy = new DefaultToolPermissionPolicy(DEFAULT_SENSITIVE_TOOL_IDS);
+    ToolGateway toolGateway = new DefaultToolGateway(toolRegistry, toolPermissionPolicy);
+
     return new AiAssetLocalRuntime(
         promptManager,
         promptPluginManager,
         modelManager,
         modelPluginManager,
         providerRegistry,
-        providerPluginManager);
+        providerPluginManager,
+        toolRegistry,
+        toolPluginManager,
+        toolPermissionPolicy,
+        toolGateway);
   }
 
   private static PromptManager createPromptManager(ClassLoader classLoader) {
@@ -103,6 +132,15 @@ public final class AiAssetLocalBootstrap {
         ModelProviderRegistryProvider::priority,
         provider -> provider.create(classLoader),
         () -> new InMemoryModelProviderRegistry(classLoader));
+  }
+
+  private static ToolRegistry createToolRegistry(ClassLoader classLoader) {
+    return selectSingleProvider(
+        classLoader,
+        ToolRegistryProvider.class,
+        ToolRegistryProvider::priority,
+        provider -> provider.create(classLoader),
+        () -> new InMemoryToolRegistry(classLoader));
   }
 
   static <P, R> R selectSingleProvider(

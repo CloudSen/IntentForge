@@ -31,5 +31,42 @@
       <artifactId>intentforge-model-provider-local</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>cn.intentforge</groupId>
+      <artifactId>intentforge-tool-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>cn.intentforge</groupId>
+      <artifactId>intentforge-tool-shell</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>cn.intentforge</groupId>
+      <artifactId>intentforge-tool-fs</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>cn.intentforge</groupId>
+      <artifactId>intentforge-tool-connectors</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>cn.intentforge</groupId>
+      <artifactId>intentforge-tool-validation</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>cn.intentforge</groupId>
+      <artifactId>intentforge-tool-mcp</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.12.2</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

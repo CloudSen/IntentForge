@@ -6,6 +6,10 @@ import cn.intentforge.model.provider.registry.ModelProviderRegistry;
 import cn.intentforge.model.registry.ModelManager;
 import cn.intentforge.prompt.local.plugin.DirectoryPromptPluginManager;
 import cn.intentforge.prompt.registry.PromptManager;
+import cn.intentforge.tool.core.gateway.ToolGateway;
+import cn.intentforge.tool.core.local.plugin.DirectoryToolPluginManager;
+import cn.intentforge.tool.core.permission.ToolPermissionPolicy;
+import cn.intentforge.tool.core.registry.ToolRegistry;
 
 /**
  * Local runtime wiring for prompt, model, and provider assets.
@@ -16,6 +20,10 @@ import cn.intentforge.prompt.registry.PromptManager;
  * @param modelPluginManager model plugin directory manager
  * @param providerRegistry model provider registry implementation in use
  * @param providerPluginManager model provider plugin directory manager
+ * @param toolRegistry tool registry implementation in use
+ * @param toolPluginManager tool plugin directory manager
+ * @param toolPermissionPolicy tool permission policy
+ * @param toolGateway tool execution gateway
  */
 public record AiAssetLocalRuntime(
     PromptManager promptManager,
@@ -23,6 +31,10 @@ public record AiAssetLocalRuntime(
     ModelManager modelManager,
     DirectoryModelPluginManager modelPluginManager,
     ModelProviderRegistry providerRegistry,
-    DirectoryModelProviderPluginManager providerPluginManager
+    DirectoryModelProviderPluginManager providerPluginManager,
+    ToolRegistry toolRegistry,
+    DirectoryToolPluginManager toolPluginManager,
+    ToolPermissionPolicy toolPermissionPolicy,
+    ToolGateway toolGateway
 ) {
 }
