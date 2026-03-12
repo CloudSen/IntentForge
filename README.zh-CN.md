@@ -1,5 +1,8 @@
 # IntentForge · 意铸
 
+> **项目状态**  
+> IntentForge 目前还是一个刚起步的工程项目，所有功能都还在持续开发中，首个 MVP 正在快速推进。如果你对这个项目感兴趣，欢迎持续关注后续更新。
+
 [English](README.md) | [简体中文](README.zh-CN.md)
 
 > **Think it. Forge it.**  

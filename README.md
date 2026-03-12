@@ -1,5 +1,8 @@
 # IntentForge
 
+> **Project Status**  
+> IntentForge is still an early-stage engineering project. All features are currently under active development, and the first MVP is moving forward quickly. If this project interests you, keep following for updates.
+
 [English](README.md) | [Simplified Chinese](README.zh-CN.md)
 
 > **Think it. Forge it.**  
