@@ -22,7 +22,7 @@ public final class InMemoryToolRegistryProvider implements ToolRegistryProvider 
         RuntimeCapability.TOOL_REGISTRY,
         "In-Memory Tool Registry",
         InMemoryToolRegistry.class.getName(),
-        Map.of("builtin", "true"));
+        Map.of("builtin", "true", "default", "true"));
   }
 
   /**

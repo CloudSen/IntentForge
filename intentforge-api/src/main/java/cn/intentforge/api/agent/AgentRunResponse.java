@@ -12,6 +12,7 @@ import java.util.List;
  * @param nextStepIndex zero-based index of the next stage to execute
  * @param awaitingReason optional waiting reason
  * @param eventsPath relative SSE path for run events
+ * @param selectedRuntimes runtime implementations selected for the current run
  * @param events ordered run events known at response time
  */
 public record AgentRunResponse(
@@ -22,6 +23,7 @@ public record AgentRunResponse(
     int nextStepIndex,
     String awaitingReason,
     String eventsPath,
+    List<RuntimeImplementationResponse> selectedRuntimes,
     List<AgentRunEventResponse> events
 ) {
   /**
@@ -37,6 +39,7 @@ public record AgentRunResponse(
     }
     awaitingReason = ApiModelSupport.normalize(awaitingReason);
     eventsPath = ApiModelSupport.requireText(eventsPath, "eventsPath");
+    selectedRuntimes = ApiModelSupport.immutableList(selectedRuntimes, "selectedRuntimes");
     events = ApiModelSupport.immutableList(events, "events");
   }
 }

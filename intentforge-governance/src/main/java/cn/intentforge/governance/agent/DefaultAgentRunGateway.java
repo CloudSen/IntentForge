@@ -17,18 +17,15 @@ import cn.intentforge.agent.core.AgentRunStatus;
 import cn.intentforge.agent.core.AgentStepResult;
 import cn.intentforge.agent.core.AgentTask;
 import cn.intentforge.agent.core.ContextPack;
+import cn.intentforge.config.ResolvedRuntimeSelection;
 import cn.intentforge.model.catalog.ModelDescriptor;
 import cn.intentforge.model.provider.ModelProvider;
 import cn.intentforge.model.provider.ModelProviderDescriptor;
-import cn.intentforge.model.provider.registry.ModelProviderRegistry;
-import cn.intentforge.model.registry.ModelManager;
 import cn.intentforge.prompt.model.PromptDefinition;
-import cn.intentforge.prompt.registry.PromptManager;
 import cn.intentforge.session.model.Session;
 import cn.intentforge.session.registry.SessionManager;
 import cn.intentforge.space.ResolvedSpaceProfile;
 import cn.intentforge.space.SpaceResolver;
-import cn.intentforge.tool.core.gateway.ToolGateway;
 import cn.intentforge.tool.core.model.ToolDefinition;
 import cn.intentforge.tool.core.model.ToolExecutionContext;
 import java.time.Clock;
@@ -49,10 +46,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class DefaultAgentRunGateway implements AgentRunGateway {
   private final SessionManager sessionManager;
   private final SpaceResolver spaceResolver;
-  private final PromptManager promptManager;
-  private final ModelManager modelManager;
-  private final ModelProviderRegistry modelProviderRegistry;
-  private final ToolGateway toolGateway;
+  private final AgentRuntimeResolver runtimeResolver;
   private final AgentRouter agentRouter;
   private final Map<String, AgentExecutor> executorsById;
   private final List<AgentDescriptor> descriptors;
@@ -65,30 +59,21 @@ public final class DefaultAgentRunGateway implements AgentRunGateway {
    *
    * @param sessionManager session manager
    * @param spaceResolver space resolver
-   * @param promptManager prompt manager
-   * @param modelManager model manager
-   * @param modelProviderRegistry model provider registry
-   * @param toolGateway tool gateway
+   * @param runtimeResolver runtime resolver that selects prompt/model/provider/tool components for each run
    * @param agentRouter route selector
    * @param executors available agent executors
    */
   public DefaultAgentRunGateway(
       SessionManager sessionManager,
       SpaceResolver spaceResolver,
-      PromptManager promptManager,
-      ModelManager modelManager,
-      ModelProviderRegistry modelProviderRegistry,
-      ToolGateway toolGateway,
+      AgentRuntimeResolver runtimeResolver,
       AgentRouter agentRouter,
       List<AgentExecutor> executors
   ) {
     this(
         sessionManager,
         spaceResolver,
-        promptManager,
-        modelManager,
-        modelProviderRegistry,
-        toolGateway,
+        runtimeResolver,
         agentRouter,
         executors,
         Clock.systemUTC());
@@ -99,10 +84,7 @@ public final class DefaultAgentRunGateway implements AgentRunGateway {
    *
    * @param sessionManager session manager
    * @param spaceResolver space resolver
-   * @param promptManager prompt manager
-   * @param modelManager model manager
-   * @param modelProviderRegistry model provider registry
-   * @param toolGateway tool gateway
+   * @param runtimeResolver runtime resolver that selects prompt/model/provider/tool components for each run
    * @param agentRouter route selector
    * @param executors available agent executors
    * @param clock clock used for event and snapshot timestamps
@@ -110,20 +92,14 @@ public final class DefaultAgentRunGateway implements AgentRunGateway {
   public DefaultAgentRunGateway(
       SessionManager sessionManager,
       SpaceResolver spaceResolver,
-      PromptManager promptManager,
-      ModelManager modelManager,
-      ModelProviderRegistry modelProviderRegistry,
-      ToolGateway toolGateway,
+      AgentRuntimeResolver runtimeResolver,
       AgentRouter agentRouter,
       List<AgentExecutor> executors,
       Clock clock
   ) {
     this.sessionManager = Objects.requireNonNull(sessionManager, "sessionManager must not be null");
     this.spaceResolver = Objects.requireNonNull(spaceResolver, "spaceResolver must not be null");
-    this.promptManager = Objects.requireNonNull(promptManager, "promptManager must not be null");
-    this.modelManager = Objects.requireNonNull(modelManager, "modelManager must not be null");
-    this.modelProviderRegistry = Objects.requireNonNull(modelProviderRegistry, "modelProviderRegistry must not be null");
-    this.toolGateway = Objects.requireNonNull(toolGateway, "toolGateway must not be null");
+    this.runtimeResolver = Objects.requireNonNull(runtimeResolver, "runtimeResolver must not be null");
     this.agentRouter = Objects.requireNonNull(agentRouter, "agentRouter must not be null");
     this.executorsById = indexExecutors(executors);
     this.descriptors = this.executorsById.values().stream().map(AgentExecutor::descriptor).toList();
@@ -161,14 +137,17 @@ public final class DefaultAgentRunGateway implements AgentRunGateway {
         : nonNullTask;
 
     ResolvedSpaceProfile resolvedSpaceProfile = spaceResolver.resolve(effectiveSpaceId);
+    ResolvedAgentRuntime resolvedRuntime = runtimeResolver.resolve(resolvedSpaceProfile);
     ContextPack contextPack = new ContextPack(
         effectiveTask,
         session,
         resolvedSpaceProfile,
-        resolvePrompts(resolvedSpaceProfile),
-        resolveModels(resolvedSpaceProfile),
-        resolveProviders(resolvedSpaceProfile),
-        resolveTools(resolvedSpaceProfile),
+        resolvedRuntime.runtimeSelection(),
+        resolvePrompts(resolvedRuntime, resolvedSpaceProfile),
+        resolveModels(resolvedRuntime, resolvedSpaceProfile),
+        resolveProviders(resolvedRuntime, resolvedSpaceProfile),
+        resolveTools(resolvedRuntime, resolvedSpaceProfile),
+        resolvedRuntime.toolGateway(),
         ToolExecutionContext.create(effectiveTask.workspaceRoot()));
     AgentRoute route = agentRouter.route(effectiveTask, contextPack, descriptors);
 
@@ -194,7 +173,8 @@ public final class DefaultAgentRunGateway implements AgentRunGateway {
         "spaceId", effectiveTask.spaceId(),
         "promptCount", String.valueOf(contextPack.prompts().size()),
         "modelCount", String.valueOf(contextPack.models().size()),
-        "toolCount", String.valueOf(contextPack.tools().size())));
+        "toolCount", String.valueOf(contextPack.tools().size()),
+        "selectedRuntimeIds", contextPack.runtimeSelection().selectedImplementationIds()));
     emit(run, nonNullObserver, AgentRunEventType.ROUTE_SELECTED, AgentRunStatus.RUNNING, "route selected", Map.of(
         "strategy", route.strategy(),
         "steps", String.valueOf(route.steps().size())));
@@ -353,24 +333,24 @@ public final class DefaultAgentRunGateway implements AgentRunGateway {
     return run;
   }
 
-  private List<PromptDefinition> resolvePrompts(ResolvedSpaceProfile resolvedSpaceProfile) {
+  private List<PromptDefinition> resolvePrompts(ResolvedAgentRuntime resolvedRuntime, ResolvedSpaceProfile resolvedSpaceProfile) {
     if (resolvedSpaceProfile.promptIds().isEmpty()) {
-      return promptManager.list(null);
+      return resolvedRuntime.promptManager().list(null);
     }
     List<PromptDefinition> resolved = new ArrayList<>();
     for (String promptId : resolvedSpaceProfile.promptIds()) {
-      promptManager.findLatest(promptId).ifPresent(resolved::add);
+      resolvedRuntime.promptManager().findLatest(promptId).ifPresent(resolved::add);
     }
     return List.copyOf(resolved);
   }
 
-  private List<ModelProviderDescriptor> resolveProviders(ResolvedSpaceProfile resolvedSpaceProfile) {
+  private List<ModelProviderDescriptor> resolveProviders(ResolvedAgentRuntime resolvedRuntime, ResolvedSpaceProfile resolvedSpaceProfile) {
     if (resolvedSpaceProfile.modelProviderIds().isEmpty()) {
-      return modelProviderRegistry.list();
+      return resolvedRuntime.modelProviderRegistry().list();
     }
     List<ModelProviderDescriptor> resolved = new ArrayList<>();
     for (String providerId : resolvedSpaceProfile.modelProviderIds()) {
-      ModelProvider provider = modelProviderRegistry.find(providerId).orElse(null);
+      ModelProvider provider = resolvedRuntime.modelProviderRegistry().find(providerId).orElse(null);
       if (provider != null) {
         resolved.add(provider.descriptor());
       }
@@ -378,14 +358,14 @@ public final class DefaultAgentRunGateway implements AgentRunGateway {
     return List.copyOf(resolved);
   }
 
-  private List<ModelDescriptor> resolveModels(ResolvedSpaceProfile resolvedSpaceProfile) {
+  private List<ModelDescriptor> resolveModels(ResolvedAgentRuntime resolvedRuntime, ResolvedSpaceProfile resolvedSpaceProfile) {
     Set<String> allowedProviderIds = new LinkedHashSet<>(resolvedSpaceProfile.modelProviderIds());
     if (resolvedSpaceProfile.modelIds().isEmpty()) {
-      return filterModels(modelManager.list(null), allowedProviderIds);
+      return filterModels(resolvedRuntime.modelManager().list(null), allowedProviderIds);
     }
     List<ModelDescriptor> resolved = new ArrayList<>();
     for (String modelId : resolvedSpaceProfile.modelIds()) {
-      ModelDescriptor descriptor = modelManager.find(modelId).orElse(null);
+      ModelDescriptor descriptor = resolvedRuntime.modelManager().find(modelId).orElse(null);
       if (descriptor == null) {
         continue;
       }
@@ -410,8 +390,8 @@ public final class DefaultAgentRunGateway implements AgentRunGateway {
     return List.copyOf(filtered);
   }
 
-  private List<ToolDefinition> resolveTools(ResolvedSpaceProfile resolvedSpaceProfile) {
-    List<ToolDefinition> tools = toolGateway.listTools();
+  private List<ToolDefinition> resolveTools(ResolvedAgentRuntime resolvedRuntime, ResolvedSpaceProfile resolvedSpaceProfile) {
+    List<ToolDefinition> tools = resolvedRuntime.toolGateway().listTools();
     if (resolvedSpaceProfile.toolIds().isEmpty()) {
       return tools;
     }

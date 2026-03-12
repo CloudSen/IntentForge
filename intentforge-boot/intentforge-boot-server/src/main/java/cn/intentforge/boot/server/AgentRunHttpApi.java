@@ -13,6 +13,7 @@ import cn.intentforge.api.agent.AgentRunEventResponse;
 import cn.intentforge.api.agent.AgentRunFeedbackRequest;
 import cn.intentforge.api.agent.AgentRunResponse;
 import cn.intentforge.api.agent.ErrorResponse;
+import cn.intentforge.api.agent.RuntimeImplementationResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.sun.net.httpserver.Headers;
@@ -243,7 +244,21 @@ final class AgentRunHttpApi {
         snapshot.nextStepIndex(),
         snapshot.awaitingReason(),
         "/api/agent-runs/" + snapshot.runId() + "/events",
+        snapshot.contextPack().runtimeSelection().implementations().values().stream()
+            .map(AgentRunHttpApi::toRuntimeResponse)
+            .toList(),
         snapshot.events().stream().map(AgentRunHttpApi::toEventResponse).toList());
+  }
+
+  private static RuntimeImplementationResponse toRuntimeResponse(
+      cn.intentforge.config.RuntimeImplementationDescriptor descriptor
+  ) {
+    return new RuntimeImplementationResponse(
+        descriptor.id(),
+        descriptor.capability().name(),
+        descriptor.displayName(),
+        descriptor.implementationClass(),
+        descriptor.metadata());
   }
 
   private static AgentRunEventResponse toEventResponse(AgentRunEvent event) {

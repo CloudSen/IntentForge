@@ -92,4 +92,33 @@ public record RuntimeCatalog(
         .filter(descriptor -> descriptor.id().equals(implementationId))
         .findFirst();
   }
+
+  /**
+   * Finds the default implementation for the provided capability.
+   *
+   * <p>The selection rule is:
+   * one descriptor marked with metadata {@code default=true}; otherwise the only available descriptor; otherwise absent.
+   *
+   * @param capability target capability
+   * @return default implementation when it can be resolved unambiguously
+   */
+  public Optional<RuntimeImplementationDescriptor> defaultImplementation(RuntimeCapability capability) {
+    List<RuntimeImplementationDescriptor> descriptors = list(capability);
+    if (descriptors.isEmpty()) {
+      return Optional.empty();
+    }
+    List<RuntimeImplementationDescriptor> defaults = descriptors.stream()
+        .filter(descriptor -> Boolean.parseBoolean(descriptor.metadata().getOrDefault("default", "false")))
+        .toList();
+    if (defaults.size() > 1) {
+      throw new IllegalStateException("multiple default runtime implementations for capability " + capability);
+    }
+    if (defaults.size() == 1) {
+      return Optional.of(defaults.getFirst());
+    }
+    if (descriptors.size() == 1) {
+      return Optional.of(descriptors.getFirst());
+    }
+    return Optional.empty();
+  }
 }

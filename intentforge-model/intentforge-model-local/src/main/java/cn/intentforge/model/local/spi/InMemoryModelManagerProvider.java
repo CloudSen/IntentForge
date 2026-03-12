@@ -23,7 +23,7 @@ public final class InMemoryModelManagerProvider implements ModelManagerProvider 
         RuntimeCapability.MODEL_MANAGER,
         "In-Memory Model Manager",
         InMemoryModelManager.class.getName(),
-        Map.of("builtin", "true"));
+        Map.of("builtin", "true", "default", "true"));
   }
 
   /**

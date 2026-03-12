@@ -23,7 +23,7 @@ public final class InMemoryModelProviderRegistryProvider implements ModelProvide
         RuntimeCapability.MODEL_PROVIDER_REGISTRY,
         "In-Memory Model Provider Registry",
         InMemoryModelProviderRegistry.class.getName(),
-        Map.of("builtin", "true"));
+        Map.of("builtin", "true", "default", "true"));
   }
 
   /**

@@ -23,7 +23,7 @@ public final class InMemoryPromptManagerProvider implements PromptManagerProvide
         RuntimeCapability.PROMPT_MANAGER,
         "In-Memory Prompt Manager",
         InMemoryPromptManager.class.getName(),
-        Map.of("builtin", "true"));
+        Map.of("builtin", "true", "default", "true"));
   }
 
   /**

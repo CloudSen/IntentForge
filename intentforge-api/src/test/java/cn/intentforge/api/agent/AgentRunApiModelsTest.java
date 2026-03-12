@@ -27,6 +27,12 @@ class AgentRunApiModelsTest {
         "run created",
         Map.of("taskId", "task-1"),
         "2026-03-12T13:00:00Z");
+    RuntimeImplementationResponse selectedRuntime = new RuntimeImplementationResponse(
+        "intentforge.prompt.manager.in-memory",
+        "PROMPT_MANAGER",
+        "In-Memory Prompt Manager",
+        "cn.intentforge.prompt.local.registry.InMemoryPromptManager",
+        Map.of("builtin", "true"));
     AgentRunResponse response = new AgentRunResponse(
         "agent-run-1",
         "task-1",
@@ -35,12 +41,14 @@ class AgentRunApiModelsTest {
         1,
         "awaiting user feedback before continuing to CODER",
         "/api/agent-runs/agent-run-1/events",
+        List.of(selectedRuntime),
         List.of(eventResponse));
 
     Assertions.assertEquals("FULL", createRequest.mode());
     Assertions.assertEquals("Please add validation", feedbackRequest.content());
     Assertions.assertEquals("User stopped the run", cancelRequest.reason());
     Assertions.assertEquals("RUN_CREATED", response.events().getFirst().type());
+    Assertions.assertEquals("PROMPT_MANAGER", response.selectedRuntimes().getFirst().capability());
     Assertions.assertEquals("/api/agent-runs/agent-run-1/events", response.eventsPath());
   }
 

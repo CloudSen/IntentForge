@@ -3,6 +3,8 @@ package cn.intentforge.boot.local;
 import cn.intentforge.agent.core.AgentGateway;
 import cn.intentforge.agent.core.AgentRunGateway;
 import cn.intentforge.agent.nativejava.NativeCodingAgentFactory;
+import cn.intentforge.config.ResolvedRuntimeSelection;
+import cn.intentforge.config.RuntimeCapability;
 import cn.intentforge.config.RuntimeCatalog;
 import cn.intentforge.config.RuntimeImplementationDescriptor;
 import cn.intentforge.governance.agent.DefaultAgentGateway;
@@ -20,8 +22,6 @@ import cn.intentforge.prompt.local.plugin.DirectoryPromptPluginManager;
 import cn.intentforge.prompt.local.registry.InMemoryPromptManager;
 import cn.intentforge.prompt.registry.PromptManager;
 import cn.intentforge.prompt.spi.PromptManagerProvider;
-import cn.intentforge.session.local.SessionLocalRuntime;
-import cn.intentforge.session.local.SessionLocalRuntimeFactory;
 import cn.intentforge.session.registry.SessionManager;
 import cn.intentforge.session.spi.SessionManagerProvider;
 import cn.intentforge.space.SpaceRegistry;
@@ -38,7 +38,9 @@ import cn.intentforge.tool.core.registry.ToolRegistry;
 import cn.intentforge.tool.core.spi.ToolRegistryProvider;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
@@ -98,37 +100,56 @@ public final class AiAssetLocalBootstrap {
     SpaceLocalRuntime spaceLocalRuntime = SpaceLocalRuntimeFactory.create(spaceConfigurer);
     SpaceRegistry spaceRegistry = spaceLocalRuntime.spaceRegistry();
     SpaceResolver spaceResolver = spaceLocalRuntime.spaceResolver();
-    SessionLocalRuntime sessionLocalRuntime = SessionLocalRuntimeFactory.create(classLoader);
-    SessionManager sessionManager = sessionLocalRuntime.sessionManager();
     List<SessionManagerProvider> sessionManagerProviders = loadProviders(classLoader, SessionManagerProvider.class);
+    Map<String, SessionManager> sessionManagers = instantiateComponents(
+        sessionManagerProviders,
+        SessionManagerProvider::descriptor,
+        provider -> provider.create(classLoader));
 
     List<PromptManagerProvider> promptManagerProviders = loadProviders(classLoader, PromptManagerProvider.class);
-    PromptManager promptManager = createPromptManager(classLoader, promptManagerProviders);
-    promptManager.loadPlugins();
-    DirectoryPromptPluginManager promptPluginManager =
-        new DirectoryPromptPluginManager(pluginsDirectory, promptManager);
-    promptPluginManager.loadAll();
+    Map<String, PromptManager> promptManagers = instantiateComponents(
+        promptManagerProviders,
+        PromptManagerProvider::descriptor,
+        provider -> provider.create(classLoader));
+    Map<String, DirectoryPromptPluginManager> promptPluginManagers = new LinkedHashMap<>();
+    for (Map.Entry<String, PromptManager> entry : promptManagers.entrySet()) {
+      entry.getValue().loadPlugins();
+      DirectoryPromptPluginManager pluginManager = new DirectoryPromptPluginManager(pluginsDirectory, entry.getValue());
+      pluginManager.loadAll();
+      promptPluginManagers.put(entry.getKey(), pluginManager);
+    }
 
     List<ModelManagerProvider> modelManagerProviders = loadProviders(classLoader, ModelManagerProvider.class);
-    ModelManager modelManager = createModelManager(classLoader, modelManagerProviders);
-    modelManager.loadPlugins();
-    DirectoryModelPluginManager modelPluginManager =
-        new DirectoryModelPluginManager(pluginsDirectory, modelManager);
-    modelPluginManager.loadAll();
+    Map<String, ModelManager> modelManagers = instantiateComponents(
+        modelManagerProviders,
+        ModelManagerProvider::descriptor,
+        provider -> provider.create(classLoader));
+    Map<String, DirectoryModelPluginManager> modelPluginManagers = new LinkedHashMap<>();
+    for (Map.Entry<String, ModelManager> entry : modelManagers.entrySet()) {
+      entry.getValue().loadPlugins();
+      DirectoryModelPluginManager pluginManager = new DirectoryModelPluginManager(pluginsDirectory, entry.getValue());
+      pluginManager.loadAll();
+      modelPluginManagers.put(entry.getKey(), pluginManager);
+    }
 
     List<ModelProviderRegistryProvider> providerRegistryProviders = loadProviders(classLoader, ModelProviderRegistryProvider.class);
-    ModelProviderRegistry providerRegistry = createProviderRegistry(classLoader, providerRegistryProviders);
-    providerRegistry.loadPlugins();
-    DirectoryModelProviderPluginManager providerPluginManager =
-        new DirectoryModelProviderPluginManager(pluginsDirectory, providerRegistry, modelManager);
-    providerPluginManager.loadAll();
+    Map<String, ModelProviderRegistry> providerRegistries = instantiateComponents(
+        providerRegistryProviders,
+        ModelProviderRegistryProvider::descriptor,
+        provider -> provider.create(classLoader));
 
     List<ToolRegistryProvider> toolRegistryProviders = loadProviders(classLoader, ToolRegistryProvider.class);
-    ToolRegistry toolRegistry = createToolRegistry(classLoader, toolRegistryProviders);
-    toolRegistry.loadPlugins();
-    DirectoryToolPluginManager toolPluginManager =
-        new DirectoryToolPluginManager(pluginsDirectory, toolRegistry);
-    toolPluginManager.loadAll();
+    Map<String, ToolRegistry> toolRegistries = instantiateComponents(
+        toolRegistryProviders,
+        ToolRegistryProvider::descriptor,
+        provider -> provider.create(classLoader));
+    Map<String, DirectoryToolPluginManager> toolPluginManagers = new LinkedHashMap<>();
+    for (Map.Entry<String, ToolRegistry> entry : toolRegistries.entrySet()) {
+      entry.getValue().loadPlugins();
+      DirectoryToolPluginManager pluginManager = new DirectoryToolPluginManager(pluginsDirectory, entry.getValue());
+      pluginManager.loadAll();
+      toolPluginManagers.put(entry.getKey(), pluginManager);
+    }
 
     RuntimeCatalog runtimeCatalog = RuntimeCatalog.of(concatDescriptors(
         promptManagerProviders.stream().map(PromptManagerProvider::descriptor).toList(),
@@ -138,21 +159,68 @@ public final class AiAssetLocalBootstrap {
         sessionManagerProviders.stream().map(SessionManagerProvider::descriptor).toList()));
 
     DefaultToolPermissionPolicy toolPermissionPolicy = new DefaultToolPermissionPolicy(DEFAULT_SENSITIVE_TOOL_IDS);
-    ToolGateway toolGateway = new DefaultToolGateway(toolRegistry, toolPermissionPolicy);
-    List<cn.intentforge.agent.core.AgentExecutor> executors = NativeCodingAgentFactory.createDefaultExecutors(toolGateway);
+    Map<String, ToolGateway> toolGateways = new LinkedHashMap<>();
+    for (Map.Entry<String, ToolRegistry> entry : toolRegistries.entrySet()) {
+      toolGateways.put(entry.getKey(), new DefaultToolGateway(entry.getValue(), toolPermissionPolicy));
+    }
+
+    LocalRuntimeComponentRegistry runtimeComponents = new LocalRuntimeComponentRegistry(
+        promptManagers,
+        modelManagers,
+        providerRegistries,
+        toolRegistries,
+        toolGateways,
+        sessionManagers);
+    RuntimeImplementationDescriptor defaultPromptDescriptor = requireDefaultDescriptor(runtimeCatalog, RuntimeCapability.PROMPT_MANAGER);
+    RuntimeImplementationDescriptor defaultModelDescriptor = requireDefaultDescriptor(runtimeCatalog, RuntimeCapability.MODEL_MANAGER);
+    RuntimeImplementationDescriptor defaultProviderDescriptor =
+        requireDefaultDescriptor(runtimeCatalog, RuntimeCapability.MODEL_PROVIDER_REGISTRY);
+    RuntimeImplementationDescriptor defaultToolDescriptor = requireDefaultDescriptor(runtimeCatalog, RuntimeCapability.TOOL_REGISTRY);
+    RuntimeImplementationDescriptor defaultSessionDescriptor = requireDefaultDescriptor(runtimeCatalog, RuntimeCapability.SESSION_MANAGER);
+
+    PromptManager promptManager = runtimeComponents.promptManager(defaultPromptDescriptor.id());
+    DirectoryPromptPluginManager promptPluginManager = promptPluginManagers.get(defaultPromptDescriptor.id());
+    ModelManager modelManager = runtimeComponents.modelManager(defaultModelDescriptor.id());
+    DirectoryModelPluginManager modelPluginManager = modelPluginManagers.get(defaultModelDescriptor.id());
+    Map<String, DirectoryModelProviderPluginManager> providerPluginManagers = new LinkedHashMap<>();
+    for (Map.Entry<String, ModelProviderRegistry> entry : providerRegistries.entrySet()) {
+      entry.getValue().loadPlugins();
+      for (Map.Entry<String, ModelManager> modelEntry : modelManagers.entrySet()) {
+        DirectoryModelProviderPluginManager pluginManager = new DirectoryModelProviderPluginManager(
+            pluginsDirectory,
+            entry.getValue(),
+            modelEntry.getValue());
+        pluginManager.loadAll();
+        if (entry.getKey().equals(defaultProviderDescriptor.id()) && modelEntry.getKey().equals(defaultModelDescriptor.id())) {
+          providerPluginManagers.put(entry.getKey(), pluginManager);
+        }
+      }
+    }
+    ModelProviderRegistry providerRegistry = runtimeComponents.modelProviderRegistry(defaultProviderDescriptor.id());
+    DirectoryModelProviderPluginManager providerPluginManager = providerPluginManagers.get(defaultProviderDescriptor.id());
+    ToolRegistry toolRegistry = runtimeComponents.toolRegistry(defaultToolDescriptor.id());
+    DirectoryToolPluginManager toolPluginManager = toolPluginManagers.get(defaultToolDescriptor.id());
+    ToolGateway toolGateway = runtimeComponents.toolGateway(defaultToolDescriptor.id());
+    SessionManager sessionManager = runtimeComponents.sessionManager(defaultSessionDescriptor.id());
+    providerPluginManager = providerPluginManagers.get(defaultProviderDescriptor.id());
+
+    LocalRuntimeComponentResolver runtimeResolver = new LocalRuntimeComponentResolver(
+        runtimeCatalog,
+        runtimeComponents,
+        new ResolvedRuntimeSelection(Map.of(RuntimeCapability.SESSION_MANAGER, defaultSessionDescriptor)));
+
+    List<cn.intentforge.agent.core.AgentExecutor> executors = NativeCodingAgentFactory.createDefaultExecutors();
     AgentRunGateway agentRunGateway = new DefaultAgentRunGateway(
         sessionManager,
         spaceResolver,
-        promptManager,
-        modelManager,
-        providerRegistry,
-        toolGateway,
+        runtimeResolver,
         new StageRoutingAgentRouter(),
         executors);
     AgentGateway agentGateway = new DefaultAgentGateway(agentRunGateway, executors);
 
     return new AiAssetLocalRuntime(
         runtimeCatalog,
+        runtimeComponents,
         promptManager,
         promptPluginManager,
         modelManager,
@@ -168,6 +236,35 @@ public final class AiAssetLocalBootstrap {
         sessionManager,
         spaceRegistry,
         spaceResolver);
+  }
+
+  private static RuntimeImplementationDescriptor requireDefaultDescriptor(
+      RuntimeCatalog runtimeCatalog,
+      RuntimeCapability capability
+  ) {
+    return runtimeCatalog.defaultImplementation(capability)
+        .orElseThrow(() -> new IllegalStateException("no default runtime implementation available for capability " + capability));
+  }
+
+  private static <P, R> Map<String, R> instantiateComponents(
+      List<P> providers,
+      Function<P, RuntimeImplementationDescriptor> descriptorExtractor,
+      Function<P, R> instanceExtractor
+  ) {
+    Map<String, R> components = new LinkedHashMap<>();
+    for (P provider : providers) {
+      RuntimeImplementationDescriptor descriptor = Objects.requireNonNull(
+          descriptorExtractor.apply(provider),
+          "runtime implementation descriptor must not be null");
+      R component = Objects.requireNonNull(
+          instanceExtractor.apply(provider),
+          "runtime component must not be null");
+      R previous = components.putIfAbsent(descriptor.id(), component);
+      if (previous != null) {
+        throw new IllegalStateException("duplicate runtime implementation id: " + descriptor.id());
+      }
+    }
+    return Map.copyOf(components);
   }
 
   private static PromptManager createPromptManager(ClassLoader classLoader, List<PromptManagerProvider> providers) {

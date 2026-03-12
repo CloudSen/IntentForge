@@ -23,7 +23,7 @@ public final class InMemorySessionManagerProvider implements SessionManagerProvi
         RuntimeCapability.SESSION_MANAGER,
         "In-Memory Session Manager",
         InMemorySessionManager.class.getName(),
-        Map.of("builtin", "true"));
+        Map.of("builtin", "true", "default", "true"));
   }
 
   /**

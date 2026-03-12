@@ -21,6 +21,7 @@ import cn.intentforge.tool.core.registry.ToolRegistry;
  * Local runtime wiring for prompt, model, provider, tool, session, and space assets.
  *
  * @param runtimeCatalog discovered runtime implementation catalog
+ * @param runtimeComponents discovered runtime component instances keyed by implementation identifier
  * @param promptManager prompt manager implementation in use
  * @param promptPluginManager prompt plugin directory manager
  * @param modelManager model manager implementation in use
@@ -39,6 +40,7 @@ import cn.intentforge.tool.core.registry.ToolRegistry;
  */
 public record AiAssetLocalRuntime(
     RuntimeCatalog runtimeCatalog,
+    LocalRuntimeComponentRegistry runtimeComponents,
     PromptManager promptManager,
     DirectoryPromptPluginManager promptPluginManager,
     ModelManager modelManager,

@@ -5,6 +5,7 @@ import cn.intentforge.agent.core.AgentRunSnapshot;
 import cn.intentforge.agent.core.AgentRunStatus;
 import cn.intentforge.agent.core.AgentTask;
 import cn.intentforge.agent.core.TaskMode;
+import cn.intentforge.config.RuntimeCapability;
 import cn.intentforge.model.catalog.ModelCapability;
 import cn.intentforge.model.catalog.ModelDescriptor;
 import cn.intentforge.model.catalog.ModelType;
@@ -94,6 +95,9 @@ class AiAssetLocalBootstrapAgentRunIntegrationTest {
     Assertions.assertEquals(AgentRunStatus.AWAITING_USER, pausedAfterPlanner.status());
     Assertions.assertEquals(1, pausedAfterPlanner.nextStepIndex());
     Assertions.assertTrue(observedEventTypes.contains(AgentRunEventType.AWAITING_USER.name()));
+    Assertions.assertEquals(
+        "intentforge.prompt.manager.in-memory",
+        pausedAfterPlanner.contextPack().runtimeSelection().get(RuntimeCapability.PROMPT_MANAGER).orElseThrow().id());
 
     AgentRunSnapshot pausedAfterCoder = runtime.agentRunGateway().resume(
         pausedAfterPlanner.runId(),
@@ -109,5 +113,18 @@ class AiAssetLocalBootstrapAgentRunIntegrationTest {
     Assertions.assertEquals(AgentRunStatus.COMPLETED, completed.status());
     Assertions.assertEquals(3, completed.state().decisions().size());
     Assertions.assertTrue(observedEventTypes.contains(AgentRunEventType.RUN_COMPLETED.name()));
+    Assertions.assertEquals(
+        Map.of(
+            "PROMPT_MANAGER", "intentforge.prompt.manager.in-memory",
+            "MODEL_MANAGER", "intentforge.model.manager.in-memory",
+            "MODEL_PROVIDER_REGISTRY", "intentforge.model-provider.registry.in-memory",
+            "TOOL_REGISTRY", "intentforge.tool.registry.in-memory",
+            "SESSION_MANAGER", "intentforge.session.manager.in-memory"),
+        pausedAfterPlanner.events().stream()
+            .filter(event -> event.type() == AgentRunEventType.CONTEXT_RESOLVED)
+            .findFirst()
+            .orElseThrow()
+            .metadata()
+            .get("selectedRuntimeIds"));
   }
 }

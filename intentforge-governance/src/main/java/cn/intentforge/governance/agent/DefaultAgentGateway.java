@@ -9,12 +9,8 @@ import cn.intentforge.agent.core.AgentRunResult;
 import cn.intentforge.agent.core.AgentRunSnapshot;
 import cn.intentforge.agent.core.AgentRunStatus;
 import cn.intentforge.agent.core.AgentTask;
-import cn.intentforge.model.provider.registry.ModelProviderRegistry;
-import cn.intentforge.model.registry.ModelManager;
-import cn.intentforge.prompt.registry.PromptManager;
 import cn.intentforge.session.registry.SessionManager;
 import cn.intentforge.space.SpaceResolver;
-import cn.intentforge.tool.core.gateway.ToolGateway;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,20 +26,14 @@ public final class DefaultAgentGateway implements AgentGateway {
    *
    * @param sessionManager session manager
    * @param spaceResolver space resolver
-   * @param promptManager prompt manager
-   * @param modelManager model manager
-   * @param modelProviderRegistry model provider registry
-   * @param toolGateway tool gateway
+   * @param runtimeResolver runtime resolver that selects prompt/model/provider/tool components for each run
    * @param agentRouter route selector
    * @param executors available agent executors
    */
   public DefaultAgentGateway(
       SessionManager sessionManager,
       SpaceResolver spaceResolver,
-      PromptManager promptManager,
-      ModelManager modelManager,
-      ModelProviderRegistry modelProviderRegistry,
-      ToolGateway toolGateway,
+      AgentRuntimeResolver runtimeResolver,
       AgentRouter agentRouter,
       List<AgentExecutor> executors
   ) {
@@ -51,10 +41,7 @@ public final class DefaultAgentGateway implements AgentGateway {
         new DefaultAgentRunGateway(
             sessionManager,
             spaceResolver,
-            promptManager,
-            modelManager,
-            modelProviderRegistry,
-            toolGateway,
+            runtimeResolver,
             agentRouter,
             executors),
         executors);

@@ -9,7 +9,6 @@ import cn.intentforge.agent.core.AgentStepResult;
 import cn.intentforge.agent.core.Artifact;
 import cn.intentforge.agent.core.ContextPack;
 import cn.intentforge.agent.core.Decision;
-import cn.intentforge.tool.core.gateway.ToolGateway;
 import cn.intentforge.tool.core.model.ToolCallRequest;
 import cn.intentforge.tool.core.model.ToolCallResult;
 import java.util.ArrayList;
@@ -26,17 +25,6 @@ public final class NativeCoderAgent implements AgentExecutor {
       AgentRole.CODER,
       "Native Coder",
       "Runs a minimal tool-assisted implementation pass for the MVP flow.");
-
-  private final ToolGateway toolGateway;
-
-  /**
-   * Creates the coder with a tool gateway.
-   *
-   * @param toolGateway tool gateway used for workspace inspection
-   */
-  public NativeCoderAgent(ToolGateway toolGateway) {
-    this.toolGateway = Objects.requireNonNull(toolGateway, "toolGateway must not be null");
-  }
 
   /**
    * Returns public metadata for this executor.
@@ -65,13 +53,13 @@ public final class NativeCoderAgent implements AgentExecutor {
 
     List<ToolCallResult> toolCalls = new ArrayList<>();
     if (NativeAgentSupport.hasTool(nonNullContextPack, "intentforge.fs.list")) {
-      toolCalls.add(toolGateway.execute(new ToolCallRequest(
+      toolCalls.add(nonNullContextPack.toolGateway().execute(new ToolCallRequest(
           "intentforge.fs.list",
           Map.of("path", "."),
           nonNullContextPack.toolExecutionContext())));
     }
     if (NativeAgentSupport.hasTool(nonNullContextPack, "intentforge.runtime.environment.read")) {
-      toolCalls.add(toolGateway.execute(new ToolCallRequest(
+      toolCalls.add(nonNullContextPack.toolGateway().execute(new ToolCallRequest(
           "intentforge.runtime.environment.read",
           Map.of(),
           nonNullContextPack.toolExecutionContext())));

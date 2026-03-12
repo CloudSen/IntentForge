@@ -8,6 +8,9 @@ import cn.intentforge.agent.core.AgentStepResult;
 import cn.intentforge.agent.core.AgentTask;
 import cn.intentforge.agent.core.ContextPack;
 import cn.intentforge.agent.core.TaskMode;
+import cn.intentforge.config.ResolvedRuntimeSelection;
+import cn.intentforge.config.RuntimeCapability;
+import cn.intentforge.config.RuntimeImplementationDescriptor;
 import cn.intentforge.model.catalog.ModelCapability;
 import cn.intentforge.model.catalog.ModelDescriptor;
 import cn.intentforge.model.catalog.ModelType;
@@ -40,7 +43,7 @@ class NativeCodingAgentsTest {
     ContextPack contextPack = contextPack(workspace);
 
     NativePlannerAgent planner = new NativePlannerAgent();
-    NativeCoderAgent coder = new NativeCoderAgent(new StubToolGateway());
+    NativeCoderAgent coder = new NativeCoderAgent();
     NativeReviewerAgent reviewer = new NativeReviewerAgent();
 
     AgentStepResult planning = planner.execute(contextPack, AgentExecutionState.empty());
@@ -61,7 +64,7 @@ class NativeCodingAgentsTest {
 
   @Test
   void shouldRejectCodingWhenPlanIsMissing() throws Exception {
-    NativeCoderAgent coder = new NativeCoderAgent(new StubToolGateway());
+    NativeCoderAgent coder = new NativeCoderAgent();
 
     AgentExecutionException exception = Assertions.assertThrows(
         AgentExecutionException.class,
@@ -74,7 +77,7 @@ class NativeCodingAgentsTest {
     Path workspace = Files.createTempDirectory("native-agent-feedback");
     ContextPack contextPack = contextPack(workspace);
     NativePlannerAgent planner = new NativePlannerAgent();
-    NativeCoderAgent coder = new NativeCoderAgent(new StubToolGateway());
+    NativeCoderAgent coder = new NativeCoderAgent();
     NativeReviewerAgent reviewer = new NativeReviewerAgent();
 
     AgentExecutionState planningState = AgentExecutionState.empty().merge(planner.execute(contextPack, AgentExecutionState.empty()));
@@ -121,9 +124,38 @@ class NativeCodingAgentsTest {
             List.of("prompt-1"),
             List.of("intentforge.fs.list", "intentforge.runtime.environment.read"),
             List.of("model-1"),
-            List.of("provider-1"),
-            List.of(),
-            Map.of()),
+        List.of("provider-1"),
+        List.of(),
+        Map.of()),
+        new ResolvedRuntimeSelection(Map.of(
+            RuntimeCapability.PROMPT_MANAGER,
+            new RuntimeImplementationDescriptor(
+                "intentforge.prompt.manager.in-memory",
+                RuntimeCapability.PROMPT_MANAGER,
+                "Prompt",
+                "prompt-manager",
+                Map.of()),
+            RuntimeCapability.MODEL_MANAGER,
+            new RuntimeImplementationDescriptor(
+                "intentforge.model.manager.in-memory",
+                RuntimeCapability.MODEL_MANAGER,
+                "Model",
+                "model-manager",
+                Map.of()),
+            RuntimeCapability.MODEL_PROVIDER_REGISTRY,
+            new RuntimeImplementationDescriptor(
+                "intentforge.model-provider.registry.in-memory",
+                RuntimeCapability.MODEL_PROVIDER_REGISTRY,
+                "Provider",
+                "provider-registry",
+                Map.of()),
+            RuntimeCapability.TOOL_REGISTRY,
+            new RuntimeImplementationDescriptor(
+                "intentforge.tool.registry.in-memory",
+                RuntimeCapability.TOOL_REGISTRY,
+                "Tool",
+                "tool-gateway",
+                Map.of()))),
         List.of(new PromptDefinition(
             "prompt-1",
             "v1",
@@ -155,6 +187,7 @@ class NativeCodingAgentsTest {
         List.of(
             new ToolDefinition("intentforge.fs.list", "list", Map.of(), false),
             new ToolDefinition("intentforge.runtime.environment.read", "env", Map.of(), false)),
+        new StubToolGateway(),
         ToolExecutionContext.create(workspace));
   }
 

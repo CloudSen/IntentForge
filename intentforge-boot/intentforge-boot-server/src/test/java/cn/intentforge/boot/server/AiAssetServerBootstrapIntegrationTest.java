@@ -51,6 +51,8 @@ class AiAssetServerBootstrapIntegrationTest {
     try (AiAssetServerRuntime runtime = startServer()) {
       HttpClient client = HttpClient.newHttpClient();
       AgentRunResponse pausedAfterPlanner = createRun(client, runtime.baseUri(), workspace);
+      Assertions.assertFalse(pausedAfterPlanner.selectedRuntimes().isEmpty());
+      Assertions.assertEquals("PROMPT_MANAGER", pausedAfterPlanner.selectedRuntimes().getFirst().capability());
 
       HttpRequest sseRequest = HttpRequest.newBuilder(runtime.baseUri().resolve(pausedAfterPlanner.eventsPath()))
           .timeout(Duration.ofSeconds(10))
@@ -62,6 +64,14 @@ class AiAssetServerBootstrapIntegrationTest {
 
       try (SseRecorder recorder = new SseRecorder(sseResponse.body())) {
         Assertions.assertEquals("RUN_CREATED", recorder.awaitEvent("RUN_CREATED").type());
+        Assertions.assertEquals(
+            Map.of(
+                "PROMPT_MANAGER", "intentforge.prompt.manager.in-memory",
+                "MODEL_MANAGER", "intentforge.model.manager.in-memory",
+                "MODEL_PROVIDER_REGISTRY", "intentforge.model-provider.registry.in-memory",
+                "TOOL_REGISTRY", "intentforge.tool.registry.in-memory",
+                "SESSION_MANAGER", "intentforge.session.manager.in-memory"),
+            recorder.awaitEvent("CONTEXT_RESOLVED").metadata().get("selectedRuntimeIds"));
         Assertions.assertEquals("AWAITING_USER", recorder.awaitEvent("AWAITING_USER").type());
 
         HttpResponse<String> firstResumeResponse = postJson(

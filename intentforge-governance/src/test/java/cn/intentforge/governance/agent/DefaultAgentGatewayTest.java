@@ -14,6 +14,9 @@ import cn.intentforge.agent.core.Decision;
 import cn.intentforge.agent.core.Plan;
 import cn.intentforge.agent.core.PlanStep;
 import cn.intentforge.agent.core.TaskMode;
+import cn.intentforge.config.ResolvedRuntimeSelection;
+import cn.intentforge.config.RuntimeCapability;
+import cn.intentforge.config.RuntimeImplementationDescriptor;
 import cn.intentforge.model.catalog.ModelCapability;
 import cn.intentforge.model.catalog.ModelDescriptor;
 import cn.intentforge.model.catalog.ModelType;
@@ -104,12 +107,13 @@ class DefaultAgentGatewayTest {
     DefaultAgentGateway gateway = new DefaultAgentGateway(
         sessionManager,
         spaceResolver,
-        promptManager,
-        modelManager,
-        providerRegistry,
-        new StubToolGateway(List.of(
-            new ToolDefinition("intentforge.fs.list", "list", Map.of(), false),
-            new ToolDefinition("intentforge.shell.exec", "exec", Map.of(), true))),
+        new StaticRuntimeResolver(
+            promptManager,
+            modelManager,
+            providerRegistry,
+            new StubToolGateway(List.of(
+                new ToolDefinition("intentforge.fs.list", "list", Map.of(), false),
+                new ToolDefinition("intentforge.shell.exec", "exec", Map.of(), true)))),
         new StageRoutingAgentRouter(),
         List.of(
             new StubExecutor("intentforge.native.planner", AgentRole.PLANNER, observedContext, true),
@@ -133,6 +137,9 @@ class DefaultAgentGatewayTest {
         List.of("provider-1"),
         observedContext.get().modelProviders().stream().map(ModelProviderDescriptor::id).toList());
     Assertions.assertEquals(List.of("intentforge.fs.list"), observedContext.get().tools().stream().map(ToolDefinition::id).toList());
+    Assertions.assertEquals(
+        "intentforge.prompt.manager.in-memory",
+        observedContext.get().runtimeSelection().get(RuntimeCapability.PROMPT_MANAGER).orElseThrow().id());
     Assertions.assertEquals(3, result.route().steps().size());
     Assertions.assertEquals(3, result.decisions().size());
     Assertions.assertEquals(2, result.artifacts().size());
@@ -155,10 +162,11 @@ class DefaultAgentGatewayTest {
             List.of(),
             List.of(),
             Map.of()),
-        new InMemoryPromptManager(),
-        new InMemoryModelManager(),
-        new InMemoryModelProviderRegistry(),
-        new StubToolGateway(List.of()),
+        new StaticRuntimeResolver(
+            new InMemoryPromptManager(),
+            new InMemoryModelManager(),
+            new InMemoryModelProviderRegistry(),
+            new StubToolGateway(List.of())),
         new StageRoutingAgentRouter(),
         List.of());
 
@@ -231,6 +239,63 @@ class DefaultAgentGatewayTest {
     @Override
     public List<ToolDefinition> listTools() {
       return toolDefinitions;
+    }
+  }
+
+  private static final class StaticRuntimeResolver implements AgentRuntimeResolver {
+    private final InMemoryPromptManager promptManager;
+    private final InMemoryModelManager modelManager;
+    private final InMemoryModelProviderRegistry providerRegistry;
+    private final StubToolGateway toolGateway;
+
+    private StaticRuntimeResolver(
+        InMemoryPromptManager promptManager,
+        InMemoryModelManager modelManager,
+        InMemoryModelProviderRegistry providerRegistry,
+        StubToolGateway toolGateway
+    ) {
+      this.promptManager = promptManager;
+      this.modelManager = modelManager;
+      this.providerRegistry = providerRegistry;
+      this.toolGateway = toolGateway;
+    }
+
+    @Override
+    public ResolvedAgentRuntime resolve(ResolvedSpaceProfile resolvedSpaceProfile) {
+      return new ResolvedAgentRuntime(
+          new ResolvedRuntimeSelection(Map.of(
+              RuntimeCapability.PROMPT_MANAGER,
+              new RuntimeImplementationDescriptor(
+                  "intentforge.prompt.manager.in-memory",
+                  RuntimeCapability.PROMPT_MANAGER,
+                  "Prompt",
+                  promptManager.getClass().getName(),
+                  Map.of()),
+              RuntimeCapability.MODEL_MANAGER,
+              new RuntimeImplementationDescriptor(
+                  "intentforge.model.manager.in-memory",
+                  RuntimeCapability.MODEL_MANAGER,
+                  "Model",
+                  modelManager.getClass().getName(),
+                  Map.of()),
+              RuntimeCapability.MODEL_PROVIDER_REGISTRY,
+              new RuntimeImplementationDescriptor(
+                  "intentforge.model-provider.registry.in-memory",
+                  RuntimeCapability.MODEL_PROVIDER_REGISTRY,
+                  "Provider",
+                  providerRegistry.getClass().getName(),
+                  Map.of()),
+              RuntimeCapability.TOOL_REGISTRY,
+              new RuntimeImplementationDescriptor(
+                  "intentforge.tool.registry.in-memory",
+                  RuntimeCapability.TOOL_REGISTRY,
+                  "Tool",
+                  toolGateway.getClass().getName(),
+                  Map.of()))),
+          promptManager,
+          modelManager,
+          providerRegistry,
+          toolGateway);
     }
   }
 }

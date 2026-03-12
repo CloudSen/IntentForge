@@ -32,5 +32,32 @@ class RuntimeCatalogTest {
         List.of("prompt-a", "prompt-b"),
         catalog.list(RuntimeCapability.PROMPT_MANAGER).stream().map(RuntimeImplementationDescriptor::id).toList());
     Assertions.assertEquals("tool-a", catalog.find(RuntimeCapability.TOOL_REGISTRY, "tool-a").orElseThrow().id());
+    Assertions.assertTrue(catalog.defaultImplementation(RuntimeCapability.PROMPT_MANAGER).isEmpty());
+  }
+
+  @Test
+  void shouldResolveDefaultImplementationByMetadataOrSingleCandidate() {
+    RuntimeCatalog catalog = RuntimeCatalog.of(List.of(
+        new RuntimeImplementationDescriptor(
+            "prompt-a",
+            RuntimeCapability.PROMPT_MANAGER,
+            "Prompt A",
+            "example.PromptA",
+            Map.of("default", "true")),
+        new RuntimeImplementationDescriptor(
+            "prompt-b",
+            RuntimeCapability.PROMPT_MANAGER,
+            "Prompt B",
+            "example.PromptB",
+            Map.of()),
+        new RuntimeImplementationDescriptor(
+            "tool-a",
+            RuntimeCapability.TOOL_REGISTRY,
+            "Tool A",
+            "example.ToolA",
+            Map.of())));
+
+    Assertions.assertEquals("prompt-a", catalog.defaultImplementation(RuntimeCapability.PROMPT_MANAGER).orElseThrow().id());
+    Assertions.assertEquals("tool-a", catalog.defaultImplementation(RuntimeCapability.TOOL_REGISTRY).orElseThrow().id());
   }
 }

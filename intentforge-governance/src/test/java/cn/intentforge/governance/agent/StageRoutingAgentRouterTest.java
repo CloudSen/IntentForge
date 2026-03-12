@@ -7,10 +7,15 @@ import cn.intentforge.agent.core.AgentRoute;
 import cn.intentforge.agent.core.AgentTask;
 import cn.intentforge.agent.core.ContextPack;
 import cn.intentforge.agent.core.TaskMode;
+import cn.intentforge.config.ResolvedRuntimeSelection;
 import cn.intentforge.session.model.Session;
 import cn.intentforge.session.model.SessionStatus;
 import cn.intentforge.space.ResolvedSpaceProfile;
 import cn.intentforge.space.SpaceType;
+import cn.intentforge.tool.core.gateway.ToolGateway;
+import cn.intentforge.tool.core.model.ToolCallRequest;
+import cn.intentforge.tool.core.model.ToolCallResult;
+import cn.intentforge.tool.core.model.ToolDefinition;
 import cn.intentforge.tool.core.model.ToolExecutionContext;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,10 +77,24 @@ class StageRoutingAgentRouterTest {
             List.of(),
             List.of(),
             Map.of()),
+        ResolvedRuntimeSelection.empty(),
         List.of(),
         List.of(),
         List.of(),
         List.of(),
+        new NoopToolGateway(),
         ToolExecutionContext.create(task.workspaceRoot()));
+  }
+
+  private static final class NoopToolGateway implements ToolGateway {
+    @Override
+    public ToolCallResult execute(ToolCallRequest request) {
+      return ToolCallResult.success("unused");
+    }
+
+    @Override
+    public List<ToolDefinition> listTools() {
+      return List.of();
+    }
   }
 }

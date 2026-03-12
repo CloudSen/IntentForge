@@ -1,5 +1,6 @@
 package cn.intentforge.space;
 
+import cn.intentforge.config.SpaceConfiguration;
 import cn.intentforge.config.RuntimeBindings;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +38,26 @@ public record SpaceProfile(
    */
   public static SpaceProfile empty() {
     return new SpaceProfile(null, null, null, null, null, null, null, null, null);
+  }
+
+  /**
+   * Creates one runtime-facing space profile from a user-managed space configuration snapshot.
+   *
+   * @param configuration user-managed configuration snapshot
+   * @return equivalent runtime-facing space profile
+   */
+  public static SpaceProfile fromConfiguration(SpaceConfiguration configuration) {
+    SpaceConfiguration nonNullConfiguration = Objects.requireNonNull(configuration, "configuration must not be null");
+    return new SpaceProfile(
+        nonNullConfiguration.skillIds(),
+        nonNullConfiguration.agentIds(),
+        nonNullConfiguration.promptIds(),
+        nonNullConfiguration.toolIds(),
+        nonNullConfiguration.modelIds(),
+        nonNullConfiguration.modelProviderIds(),
+        nonNullConfiguration.memoryIds(),
+        nonNullConfiguration.properties(),
+        nonNullConfiguration.runtimeBindings());
   }
 
   /**
