@@ -10,7 +10,7 @@ The source of truth for all HTTP API contracts is:
 ## Rules
 
 - All HTTP APIs must be defined in `docs/api-spec.yaml`.
-- The OpenAPI document must use `openapi: 3.2.0`.
+- The OpenAPI document must use `openapi: 3.1.0`.
 - Request and response models must be defined in reusable schemas where appropriate.
 - Every endpoint must define:
   - summary
