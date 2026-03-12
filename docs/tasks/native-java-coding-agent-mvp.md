@@ -22,8 +22,8 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 
 ## Overall Status
 - status: running
-- process: 5%
-- current_step: 13
+- process: 20%
+- current_step: 14
 
 ## Steps
 | step | description | status | note |
@@ -40,8 +40,8 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 | 10 | Add failing tests and API contract updates for run create, SSE events, feedback resume, cancel, minimal boot-server startup flow, and preferred virtual-thread request handling | finished | commit: 8003fe9 |
 | 11 | Implement intentforge-api transport contracts and boot-server HTTP/SSE wiring on top of `AgentRunGateway`, preferring virtual threads for request processing | finished | commit: e6495f1 |
 | 12 | Update docs, verify terminal smoke flow and full test suite, sync task bookkeeping, and finalize API/server checkpoints | finished | commit: fd7e884 |
-| 13 | Re-scope the finished API/server chain to config-driven runtime selection and record the new architecture baseline | in_progress | commit: pending |
-| 14 | Add red tests and core contracts for config-managed runtime binding models, space inheritance of runtime selectors, and runtime catalog discovery | notrun | commit: pending |
+| 13 | Re-scope the finished API/server chain to config-driven runtime selection and record the new architecture baseline | finished | commit: ca219b4 |
+| 14 | Add red tests and core contracts for config-managed runtime binding models, space inheritance of runtime selectors, and runtime catalog discovery | in_progress | commit: pending |
 | 15 | Implement config-core models, space/runtime binding resolution, and bootstrap runtime catalog assembly without global hardcoded implementation winners | notrun | commit: pending |
 | 16 | Propagate selected runtime bindings into governance, context pack, run snapshot, events, and API-facing observability models | notrun | commit: pending |
 | 17 | Update architecture/docs, run full verification, sync task bookkeeping, and finalize the configuration-driven runtime-selection architecture | notrun | commit: pending |
@@ -72,6 +72,7 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 | 2026-03-12 22:06:22 +0800 | finished | 100% | updated architecture and module docs, verified a real terminal smoke flow through `AiAssetServerMain` using `curl` for create, SSE replay/live events, resume, and completion, and passed the full `make test` reactor |
 | 2026-03-12 22:06:55 +0800 | finished | 100% | task bookkeeping synchronized after docs checkpoint `fd7e884`; the minimal API + boot-server chain is fully closed with virtual-thread-backed request handling |
 | 2026-03-12 23:31:39 +0800 | running | 5% | scope changed again: reopen the completed API/server chain toward a configuration-driven architecture where SPI only declares available implementations, `config` stores user-facing space configuration, `SpaceProfile` resolves runtime bindings, and run-time artifacts expose the final selected implementations |
+| 2026-03-12 23:35:28 +0800 | running | 20% | step 14 started; added red tests and landed the first formal runtime-binding model in `intentforge-config-core`, then extended `SpaceProfile` and `ResolvedSpaceProfile` so runtime implementation bindings inherit and resolve across the space hierarchy |
 
 ## Sequence Diagram
 

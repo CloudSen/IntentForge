@@ -1,5 +1,6 @@
 package cn.intentforge.space.local.resolve;
 
+import cn.intentforge.config.RuntimeBindings;
 import cn.intentforge.space.ResolvedSpaceProfile;
 import cn.intentforge.space.SpaceDefinition;
 import cn.intentforge.space.SpaceProfile;
@@ -101,6 +102,7 @@ public final class DefaultSpaceResolver implements SpaceResolver {
     List<String> modelProviderIds = List.of();
     List<String> memoryIds = List.of();
     Map<String, String> config = new LinkedHashMap<>();
+    RuntimeBindings runtimeBindings = RuntimeBindings.empty();
     List<String> inheritancePath = new ArrayList<>(chain.size());
     for (SpaceDefinition definition : chain) {
       inheritancePath.add(definition.id());
@@ -129,6 +131,9 @@ public final class DefaultSpaceResolver implements SpaceResolver {
       if (profile.config() != null) {
         config.putAll(profile.config());
       }
+      if (profile.runtimeBindings() != null) {
+        runtimeBindings = runtimeBindings.overlay(profile.runtimeBindings());
+      }
     }
     return new ResolvedSpaceProfile(
         target.id(),
@@ -141,7 +146,8 @@ public final class DefaultSpaceResolver implements SpaceResolver {
         modelIds,
         modelProviderIds,
         memoryIds,
-        config);
+        config,
+        runtimeBindings);
   }
 
   private static String requireText(String value, String fieldName) {

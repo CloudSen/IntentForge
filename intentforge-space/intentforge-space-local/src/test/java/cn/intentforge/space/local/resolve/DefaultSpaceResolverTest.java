@@ -1,5 +1,7 @@
 package cn.intentforge.space.local.resolve;
 
+import cn.intentforge.config.RuntimeBindings;
+import cn.intentforge.config.RuntimeCapability;
 import cn.intentforge.space.ResolvedSpaceProfile;
 import cn.intentforge.space.SpaceDefinition;
 import cn.intentforge.space.SpaceProfile;
@@ -28,7 +30,8 @@ class DefaultSpaceResolverTest {
                 null,
                 null,
                 List.of("memory-app", "memory-audit"),
-                Map.of("temperature", "0.2"))),
+                Map.of("temperature", "0.2"),
+                RuntimeBindings.of(Map.of(RuntimeCapability.MEMORY_STORE, "memory-graph")))),
         new SpaceDefinition(
             "company-root",
             SpaceType.COMPANY,
@@ -41,7 +44,10 @@ class DefaultSpaceResolverTest {
                 null,
                 List.of("provider-company"),
                 List.of("memory-company"),
-                Map.of("timeout", "30", "region", "cn"))),
+                Map.of("timeout", "30", "region", "cn"),
+                RuntimeBindings.of(Map.of(
+                    RuntimeCapability.PROMPT_MANAGER, "prompt-db",
+                    RuntimeCapability.MEMORY_STORE, "memory-sql")))),
         new SpaceDefinition(
             "product-alpha",
             SpaceType.PRODUCT,
@@ -54,7 +60,8 @@ class DefaultSpaceResolverTest {
                 List.of("model-product", "model-shadow"),
                 null,
                 null,
-                Map.of("temperature", "0.1"))),
+                Map.of("temperature", "0.1"),
+                RuntimeBindings.of(Map.of(RuntimeCapability.PROMPT_MANAGER, "prompt-git")))),
         new SpaceDefinition(
             "project-alpha",
             SpaceType.PROJECT,
@@ -67,7 +74,8 @@ class DefaultSpaceResolverTest {
                 null,
                 List.of("provider-project"),
                 List.of("memory-project"),
-                Map.of("region", "apac", "projectKey", "alpha")))));
+                Map.of("region", "apac", "projectKey", "alpha"),
+                RuntimeBindings.of(Map.of(RuntimeCapability.TOOL_REGISTRY, "tool-mcp"))))));
 
     ResolvedSpaceProfile resolved = new DefaultSpaceResolver(registry).resolve("application-alpha");
 
@@ -85,6 +93,9 @@ class DefaultSpaceResolverTest {
     Assertions.assertEquals(
         Map.of("timeout", "30", "region", "apac", "projectKey", "alpha", "temperature", "0.2"),
         resolved.config());
+    Assertions.assertEquals("prompt-git", resolved.runtimeBindings().get(RuntimeCapability.PROMPT_MANAGER).orElseThrow());
+    Assertions.assertEquals("tool-mcp", resolved.runtimeBindings().get(RuntimeCapability.TOOL_REGISTRY).orElseThrow());
+    Assertions.assertEquals("memory-graph", resolved.runtimeBindings().get(RuntimeCapability.MEMORY_STORE).orElseThrow());
   }
 
   @Test
@@ -102,7 +113,8 @@ class DefaultSpaceResolverTest {
             List.of("model-company"),
             List.of("provider-company"),
             List.of("memory-company"),
-            Map.of("region", "cn"))));
+            Map.of("region", "cn"),
+            RuntimeBindings.of(Map.of(RuntimeCapability.MODEL_MANAGER, "model-db")))));
 
     ResolvedSpaceProfile resolved = new DefaultSpaceResolver(registry).resolve("company-root");
 
@@ -115,6 +127,7 @@ class DefaultSpaceResolverTest {
     Assertions.assertEquals(List.of("provider-company"), resolved.modelProviderIds());
     Assertions.assertEquals(List.of("memory-company"), resolved.memoryIds());
     Assertions.assertEquals(Map.of("region", "cn"), resolved.config());
+    Assertions.assertEquals("model-db", resolved.runtimeBindings().get(RuntimeCapability.MODEL_MANAGER).orElseThrow());
   }
 
   @Test

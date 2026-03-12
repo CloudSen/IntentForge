@@ -1,5 +1,7 @@
 package cn.intentforge.space;
 
+import cn.intentforge.config.RuntimeBindings;
+import cn.intentforge.config.RuntimeCapability;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
@@ -16,7 +18,8 @@ class SpaceProfileTest {
         List.of(" model-a "),
         List.of(" provider-a "),
         List.of(" memory-a "),
-        Map.of(" region ", " cn "));
+        Map.of(" region ", " cn "),
+        RuntimeBindings.of(Map.of(RuntimeCapability.PROMPT_MANAGER, " prompt-db ")));
 
     Assertions.assertEquals(List.of("skill-a"), profile.skillIds());
     Assertions.assertEquals(List.of("agent-a"), profile.agentIds());
@@ -26,6 +29,7 @@ class SpaceProfileTest {
     Assertions.assertEquals(List.of("provider-a"), profile.modelProviderIds());
     Assertions.assertEquals(List.of("memory-a"), profile.memoryIds());
     Assertions.assertEquals(Map.of("region", "cn"), profile.config());
+    Assertions.assertEquals("prompt-db", profile.runtimeBindings().get(RuntimeCapability.PROMPT_MANAGER).orElseThrow());
   }
 
   @Test
@@ -34,6 +38,7 @@ class SpaceProfileTest {
         IllegalArgumentException.class,
         () -> new SpaceProfile(
             List.of(" "),
+            null,
             null,
             null,
             null,

@@ -1,5 +1,6 @@
 package cn.intentforge.space;
 
+import cn.intentforge.config.RuntimeBindings;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.Objects;
  * @param modelProviderIds configured model provider identifiers; {@code null} means inherit from parent
  * @param memoryIds configured memory identifiers; {@code null} means inherit from parent
  * @param config layered key-value configuration; keys not present inherit from parent spaces
+ * @param runtimeBindings configured runtime implementation bindings; {@code null} means inherit from parent
  */
 public record SpaceProfile(
     List<String> skillIds,
@@ -25,7 +27,8 @@ public record SpaceProfile(
     List<String> modelIds,
     List<String> modelProviderIds,
     List<String> memoryIds,
-    Map<String, String> config
+    Map<String, String> config,
+    RuntimeBindings runtimeBindings
 ) {
   /**
    * Creates an empty profile that inherits every configurable field.
@@ -33,7 +36,32 @@ public record SpaceProfile(
    * @return empty inheritable profile
    */
   public static SpaceProfile empty() {
-    return new SpaceProfile(null, null, null, null, null, null, null, null);
+    return new SpaceProfile(null, null, null, null, null, null, null, null, null);
+  }
+
+  /**
+   * Creates a profile without explicit runtime bindings.
+   *
+   * @param skillIds configured skill identifiers
+   * @param agentIds configured agent identifiers
+   * @param promptIds configured prompt identifiers
+   * @param toolIds configured tool identifiers
+   * @param modelIds configured model identifiers
+   * @param modelProviderIds configured model provider identifiers
+   * @param memoryIds configured memory identifiers
+   * @param config layered key-value configuration
+   */
+  public SpaceProfile(
+      List<String> skillIds,
+      List<String> agentIds,
+      List<String> promptIds,
+      List<String> toolIds,
+      List<String> modelIds,
+      List<String> modelProviderIds,
+      List<String> memoryIds,
+      Map<String, String> config
+  ) {
+    this(skillIds, agentIds, promptIds, toolIds, modelIds, modelProviderIds, memoryIds, config, null);
   }
 
   /**
@@ -47,6 +75,7 @@ public record SpaceProfile(
    * @param modelProviderIds configured model provider identifiers
    * @param memoryIds configured memory identifiers
    * @param config layered key-value configuration
+   * @param runtimeBindings configured runtime implementation bindings
    */
   public SpaceProfile {
     skillIds = normalizeList(skillIds, "skillIds");
@@ -57,6 +86,7 @@ public record SpaceProfile(
     modelProviderIds = normalizeList(modelProviderIds, "modelProviderIds");
     memoryIds = normalizeList(memoryIds, "memoryIds");
     config = normalizeMap(config, "config");
+    runtimeBindings = runtimeBindings == null || runtimeBindings.isEmpty() ? runtimeBindings : runtimeBindings;
   }
 
   private static List<String> normalizeList(List<String> values, String fieldName) {
