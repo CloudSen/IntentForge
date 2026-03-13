@@ -26,9 +26,9 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 - [x] Tests cover normal flow, planner rework loops, planner-to-review direct switch, explicit target-agent switch, invalid transition requests, disallowed agent selection, terminal-state mutations, and end-to-end HTTP/SSE interaction for user-directed mode switching.
 
 ## Overall Status
-- status: running
-- process: 96%
-- current_step: 22
+- status: finished
+- process: 100%
+- current_step: completed
 
 ## Steps
 | step | description | status | note |
@@ -54,7 +54,7 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 | 19 | Add red tests and API contract changes for selectable next actions, planner confirmation, mode switching, target-agent switching, and invalid transition handling | finished | commit: e651b06 |
 | 20 | Extend agent-core and governance contracts to support user-directed transitions, dynamic next-step selection, and allowed-agent validation at checkpoints | finished | commit: e651b06 |
 | 21 | Implement API and boot-server transport changes so clients can select planner, coder, reviewer, or a specific allowed agent from checkpoint state and observe those options over SSE | finished | commit: e651b06 |
-| 22 | Update docs, refresh final diagrams for the new interaction model, run full verification, sync bookkeeping, and finalize the user-directed multi-agent flow | running | commit: pending |
+| 22 | Update docs, refresh final diagrams for the new interaction model, run full verification, sync bookkeeping, and finalize the user-directed multi-agent flow | finished | commit: bb67d56 |
 
 ## Update Log
 | time | status | process | update |
@@ -93,6 +93,7 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 | 2026-03-13 09:51:00 +0800 | running | 75% | steps 20 and 21 are functionally in place: agent-core now exposes `AgentRunTransition` and `AgentRunAvailableAction`, governance mutates route history from user-selected actions, API responses expose `selectedRouteSteps` and `availableNextActions`, and resume requests carry `nextRole`, `nextAgentId`, or `complete=true` |
 | 2026-03-13 09:55:28 +0800 | running | 92% | targeted reactor verification passed for agent-core, governance, api, boot-local, and boot-server after the explicit transition contract replaced the fixed planner-to-coder auto-advance model |
 | 2026-03-13 09:57:54 +0800 | running | 96% | checkpoint `e651b06` completed steps 19 to 21: user-directed transitions are now modeled in agent-core, enforced in governance, exposed through API responses and SSE metadata, and covered by unit plus integration tests |
+| 2026-03-13 09:59:53 +0800 | finished | 100% | docs checkpoint `bb67d56` refreshed the final interaction diagrams, OpenAPI contract, module map, and README guidance; full `make test` passed for the entire reactor |
 
 ## Final Sequence Diagram
 
