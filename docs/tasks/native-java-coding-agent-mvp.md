@@ -1,7 +1,7 @@
 # Task: Native Java Coding Agent Config-Driven Runtime Selection
 
 ## Requirement
-Starting from the completed event-driven native Java coding agent runtime and minimal API/server chain, replace the current bootstrap-time hardcoded runtime selection with a configuration-driven architecture. SPI should only define which implementations are available. User-facing configuration stored in the `config` module should define which capabilities and implementations are bound to each space, including skills, agents, prompts, models, model providers, tools, memory, config providers, and related runtime selectors. `SpaceProfile` should resolve the effective runtime bindings for the current space, and every run should expose the final runtime selection through `ContextPack`, `AgentRunSnapshot`, and emitted events. The target is a durable architecture rather than an MVP-only shortcut.
+Starting from the completed event-driven native Java coding agent runtime and minimal API/server chain, extend the run model from the current fixed route checkpoint flow into the actual desired user-directed interaction model. After the planner produces a plan, the run must wait for explicit user confirmation before entering coder or reviewer execution. The user must be able to choose the next agent mode or target agent at each checkpoint, including switching from planner to coder, switching from planner to reviewer, re-entering planner for another iteration, or selecting a different allowed agent implementation. SPI should continue to define only which implementations are available, while user-facing configuration stored in the `config` module should define which capabilities and implementations are bound to each space, including skills, agents, prompts, models, model providers, tools, memory, config providers, and related runtime selectors. `SpaceProfile` should resolve the effective runtime bindings for the current space, every run should expose the final runtime selection through `ContextPack`, `AgentRunSnapshot`, and emitted events, and run snapshots/events must also expose the available user-selectable next actions. The target is a durable architecture rather than an MVP-only shortcut.
 
 ## Acceptance Criteria
 - [x] `intentforge-agent-core` defines run/event/lifecycle contracts for incremental execution, user-feedback checkpoints, and resume/cancel semantics across module boundaries.
@@ -19,11 +19,16 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 - [x] `ContextPack`, `AgentRunSnapshot`, and emitted `AgentRunEvent` metadata expose the final selected runtime implementations so UI and operators can inspect which implementation the current run is using.
 - [x] Tests cover configuration inheritance, invalid selector handling, unavailable implementation selection, runtime resolution precedence, and run-time observability of selected implementations.
 - [x] Documentation stays synchronized with the new architecture, and all changes pass `make test`.
+- [ ] Planner completion no longer auto-advances to a fixed next stage; the run pauses with explicit selectable next actions and requires user confirmation before entering coder or reviewer.
+- [ ] `intentforge-agent-core` defines durable contracts for user-directed run transitions, including next-action selection, agent-mode switching, target-agent switching, and validation errors for invalid or disallowed transitions.
+- [ ] `intentforge-governance` supports dynamic route mutation or checkpoint continuation based on user-selected next actions instead of only the startup `TaskMode`, while still enforcing space-level allowed agents and runtime bindings.
+- [ ] `intentforge-api` and `intentforge-boot-server` expose a transport contract for selecting the next action at a checkpoint, including choosing planner, coder, reviewer, or a specific allowed agent, and SSE events/snapshots show both the selected action and currently available options.
+- [ ] Tests cover normal flow, planner rework loops, planner-to-review direct switch, explicit target-agent switch, invalid transition requests, disallowed agent selection, terminal-state mutations, and end-to-end HTTP/SSE interaction for user-directed mode switching.
 
 ## Overall Status
-- status: finished
-- process: 100%
-- current_step: completed
+- status: running
+- process: 10%
+- current_step: 19
 
 ## Steps
 | step | description | status | note |
@@ -45,6 +50,11 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 | 15 | Implement config-core models, space/runtime binding resolution, and bootstrap runtime catalog assembly without global hardcoded implementation winners | finished | commit: 7d3afc7 |
 | 16 | Propagate selected runtime bindings into governance, context pack, run snapshot, events, and API-facing observability models | finished | commit: 7d3afc7 |
 | 17 | Update architecture/docs, run full verification, sync task bookkeeping, and finalize the configuration-driven runtime-selection architecture | finished | commits: 70f3799, c48aff9, baf1f07 |
+| 18 | Re-scope the finished configuration-driven runtime task to the real user-directed transition model and preserve the latest recovery baseline | finished | commit: pending |
+| 19 | Add red tests and API contract changes for selectable next actions, planner confirmation, mode switching, target-agent switching, and invalid transition handling | notrun | commit: pending |
+| 20 | Extend agent-core and governance contracts to support user-directed transitions, dynamic next-step selection, and allowed-agent validation at checkpoints | notrun | commit: pending |
+| 21 | Implement API and boot-server transport changes so clients can select planner, coder, reviewer, or a specific allowed agent from checkpoint state and observe those options over SSE | notrun | commit: pending |
+| 22 | Update docs, refresh final diagrams for the new interaction model, run full verification, sync bookkeeping, and finalize the user-directed multi-agent flow | notrun | commit: pending |
 
 ## Update Log
 | time | status | process | update |
@@ -78,10 +88,11 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 | 2026-03-13 00:18:45 +0800 | finished | 100% | architecture docs, OpenAPI contract, config README, and task bookkeeping have been updated; `make test` now passes across the full reactor after test checkpoint `70f3799` stabilized unordered runtime-selection responses |
 | 2026-03-13 00:19:39 +0800 | finished | 100% | task bookkeeping synchronized after docs checkpoint `c48aff9`; the configuration-driven runtime-selection architecture is fully closed |
 | 2026-03-13 14:35:00 +0800 | finished | 100% | refreshed the final diagrams to match the latest controller/application-service split, SSE replay/live behavior, and the current route-driven checkpoint model instead of implying a fully free-form Plan to Code to Review mode switch |
+| 2026-03-13 09:30:07 +0800 | running | 10% | scope changed again: reopen the finished configuration-driven runtime task toward the real user-directed transition model where planner completion requires explicit user confirmation and the user can choose the next mode or allowed agent at each checkpoint; the latest completed recovery baseline remains the current implementation chain ending at `18dfc6d` |
 
-## Sequence Diagram
+## Current Baseline Sequence Diagram
 
-Current behavior: `POST /api/agent-runs` creates the run and immediately starts event-driven execution. The SSE transport is established by `GET /api/agent-runs/{runId}/events` after the client receives `runId`; the server first replays `AgentRunSnapshot.events()` and then streams live events, so planner output is not lost even if the SSE connection is opened after run creation. The current implementation is still route-driven: `StageRoutingAgentRouter` selects the stage pipeline from `TaskMode` up front, and user feedback resumes the next checkpoint on that selected route instead of arbitrarily switching the same run to a new mode. If the product requirement becomes "start in plan mode and only switch to coder after explicit user approval", that needs a future route-mutation or follow-up-run capability rather than the current fixed route selection.
+Current implemented baseline: `POST /api/agent-runs` creates the run and immediately starts event-driven execution. The SSE transport is established by `GET /api/agent-runs/{runId}/events` after the client receives `runId`; the server first replays `AgentRunSnapshot.events()` and then streams live events, so planner output is not lost even if the SSE connection is opened after run creation. The current implementation is still route-driven: `StageRoutingAgentRouter` selects the stage pipeline from `TaskMode` up front, and user feedback resumes the next checkpoint on that selected route instead of arbitrarily switching the same run to a new mode. This baseline will be replaced after the new user-directed transition model is implemented.
 
 ```mermaid
 sequenceDiagram
@@ -140,7 +151,7 @@ sequenceDiagram
     end
 ```
 
-## Module Relationship Diagram
+## Current Baseline Module Relationship Diagram
 
 ```mermaid
 flowchart LR
