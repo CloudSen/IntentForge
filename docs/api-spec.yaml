@@ -179,14 +179,39 @@ components:
             type: string
     AgentRunFeedbackRequest:
       type: object
-      description: User feedback used to resume one paused run.
-      required:
-        - content
+      description: User feedback used to resume one paused run with an explicit next action selection.
       properties:
         content:
           type: string
-          description: User feedback content.
+          description: Optional user feedback content carried into the next turn.
           example: Please add validation details.
+        nextRole:
+          type: string
+          description: Optional next role selected by the user when governance should choose the preferred allowed agent for that role.
+          enum:
+            - PLANNER
+            - CODER
+            - REVIEWER
+            - JUDGE
+          example: CODER
+        nextAgentId:
+          type: string
+          description: Optional explicit next agent identifier selected by the user.
+          example: intentforge.native.reviewer
+        complete:
+          type: boolean
+          description: When true, the run completes at the current checkpoint instead of executing another agent.
+          default: false
+      oneOf:
+        - required:
+            - nextRole
+        - required:
+            - nextAgentId
+        - required:
+            - complete
+          properties:
+            complete:
+              const: true
     AgentRunCancelRequest:
       type: object
       description: Cancellation request for one run.
@@ -208,6 +233,8 @@ components:
         - nextStepIndex
         - eventsPath
         - selectedRuntimes
+        - selectedRouteSteps
+        - availableNextActions
         - events
       properties:
         runId:
@@ -250,11 +277,91 @@ components:
           description: Runtime implementations selected for the current run.
           items:
             $ref: '#/components/schemas/RuntimeImplementationResponse'
+        selectedRouteSteps:
+          type: array
+          description: Route steps already chosen and executed or scheduled for this run.
+          items:
+            $ref: '#/components/schemas/AgentRouteStepResponse'
+        availableNextActions:
+          type: array
+          description: User-selectable next actions visible when the run is paused at a checkpoint.
+          items:
+            $ref: '#/components/schemas/AgentRunActionResponse'
         events:
           type: array
           description: Ordered run events known at the time of the response.
           items:
             $ref: '#/components/schemas/AgentRunEventResponse'
+    AgentRouteStepResponse:
+      type: object
+      description: One selected route step already attached to the current run.
+      required:
+        - order
+        - agentId
+        - role
+        - reason
+      properties:
+        order:
+          type: integer
+          format: int32
+          minimum: 1
+          description: One-based step order inside the selected route history.
+          example: 1
+        agentId:
+          type: string
+          description: Selected agent identifier.
+          example: intentforge.native.planner
+        role:
+          type: string
+          description: Selected agent role.
+          enum:
+            - PLANNER
+            - CODER
+            - REVIEWER
+            - JUDGE
+          example: PLANNER
+        reason:
+          type: string
+          description: Human-readable explanation of why this step was selected.
+          example: initial planner step selected from task mode
+    AgentRunActionResponse:
+      type: object
+      description: One user-selectable next action visible at a paused checkpoint.
+      required:
+        - preferred
+        - complete
+        - reason
+      properties:
+        agentId:
+          type:
+            - string
+            - 'null'
+          description: Target agent identifier when the action continues execution with one agent, otherwise null for completion.
+          example: intentforge.native.coder
+        role:
+          type:
+            - string
+            - 'null'
+          description: Target role when the action continues execution with one agent, otherwise null for completion.
+          enum:
+            - PLANNER
+            - CODER
+            - REVIEWER
+            - JUDGE
+            - null
+          example: CODER
+        preferred:
+          type: boolean
+          description: Whether governance marks this action as the preferred default at the current checkpoint.
+          example: true
+        complete:
+          type: boolean
+          description: Whether this action completes the run without executing another agent.
+          example: false
+        reason:
+          type: string
+          description: Human-readable rationale shown to the caller.
+          example: preferred next action for task mode FULL
     RuntimeImplementationResponse:
       type: object
       description: One runtime implementation selected for the current run.

@@ -8,6 +8,7 @@ Current implementation:
 - request handling prefers virtual threads
 - thin `HttpExchange` adapters that delegate business logic into `intentforge-api`
 - create-run requests may auto-create one session when `sessionId` is omitted
+- paused runs expose `availableNextActions`, and resume requests explicitly choose `nextRole`, `nextAgentId`, or `complete=true`
 - terminal main: `cn.intentforge.boot.server.AiAssetServerMain`
 
 Minimal startup:

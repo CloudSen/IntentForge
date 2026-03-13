@@ -32,6 +32,7 @@ The source of truth for all HTTP API contracts is:
 - Do not rely on implicit response structures.
 - `4xx` and `5xx` responses should have defined payload schemas where applicable.
 - Long-running run responses should expose observable runtime-selection data when implementation choice affects execution.
+- Checkpoint-based run responses should expose both the already selected route history and the currently available next actions whenever user selection can change the next step.
 
 ## Naming conventions
 

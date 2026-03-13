@@ -1,4 +1,4 @@
-# Task: Native Java Coding Agent Config-Driven Runtime Selection
+# Task: Native Java Coding Agent User-Directed Runtime Orchestration
 
 ## Requirement
 Starting from the completed event-driven native Java coding agent runtime and minimal API/server chain, extend the run model from the current fixed route checkpoint flow into the actual desired user-directed interaction model. After the planner produces a plan, the run must wait for explicit user confirmation before entering coder or reviewer execution. The user must be able to choose the next agent mode or target agent at each checkpoint, including switching from planner to coder, switching from planner to reviewer, re-entering planner for another iteration, or selecting a different allowed agent implementation. SPI should continue to define only which implementations are available, while user-facing configuration stored in the `config` module should define which capabilities and implementations are bound to each space, including skills, agents, prompts, models, model providers, tools, memory, config providers, and related runtime selectors. `SpaceProfile` should resolve the effective runtime bindings for the current space, every run should expose the final runtime selection through `ContextPack`, `AgentRunSnapshot`, and emitted events, and run snapshots/events must also expose the available user-selectable next actions. The target is a durable architecture rather than an MVP-only shortcut.
@@ -19,16 +19,16 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 - [x] `ContextPack`, `AgentRunSnapshot`, and emitted `AgentRunEvent` metadata expose the final selected runtime implementations so UI and operators can inspect which implementation the current run is using.
 - [x] Tests cover configuration inheritance, invalid selector handling, unavailable implementation selection, runtime resolution precedence, and run-time observability of selected implementations.
 - [x] Documentation stays synchronized with the new architecture, and all changes pass `make test`.
-- [ ] Planner completion no longer auto-advances to a fixed next stage; the run pauses with explicit selectable next actions and requires user confirmation before entering coder or reviewer.
-- [ ] `intentforge-agent-core` defines durable contracts for user-directed run transitions, including next-action selection, agent-mode switching, target-agent switching, and validation errors for invalid or disallowed transitions.
-- [ ] `intentforge-governance` supports dynamic route mutation or checkpoint continuation based on user-selected next actions instead of only the startup `TaskMode`, while still enforcing space-level allowed agents and runtime bindings.
-- [ ] `intentforge-api` and `intentforge-boot-server` expose a transport contract for selecting the next action at a checkpoint, including choosing planner, coder, reviewer, or a specific allowed agent, and SSE events/snapshots show both the selected action and currently available options.
-- [ ] Tests cover normal flow, planner rework loops, planner-to-review direct switch, explicit target-agent switch, invalid transition requests, disallowed agent selection, terminal-state mutations, and end-to-end HTTP/SSE interaction for user-directed mode switching.
+- [x] Planner completion no longer auto-advances to a fixed next stage; the run pauses with explicit selectable next actions and requires user confirmation before entering coder or reviewer.
+- [x] `intentforge-agent-core` defines durable contracts for user-directed run transitions, including next-action selection, agent-mode switching, target-agent switching, and validation errors for invalid or disallowed transitions.
+- [x] `intentforge-governance` supports dynamic route mutation or checkpoint continuation based on user-selected next actions instead of only the startup `TaskMode`, while still enforcing space-level allowed agents and runtime bindings.
+- [x] `intentforge-api` and `intentforge-boot-server` expose a transport contract for selecting the next action at a checkpoint, including choosing planner, coder, reviewer, or a specific allowed agent, and SSE events/snapshots show both the selected action and currently available options.
+- [x] Tests cover normal flow, planner rework loops, planner-to-review direct switch, explicit target-agent switch, invalid transition requests, disallowed agent selection, terminal-state mutations, and end-to-end HTTP/SSE interaction for user-directed mode switching.
 
 ## Overall Status
 - status: running
-- process: 10%
-- current_step: 19
+- process: 96%
+- current_step: 22
 
 ## Steps
 | step | description | status | note |
@@ -51,10 +51,10 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 | 16 | Propagate selected runtime bindings into governance, context pack, run snapshot, events, and API-facing observability models | finished | commit: 7d3afc7 |
 | 17 | Update architecture/docs, run full verification, sync task bookkeeping, and finalize the configuration-driven runtime-selection architecture | finished | commits: 70f3799, c48aff9, baf1f07 |
 | 18 | Re-scope the finished configuration-driven runtime task to the real user-directed transition model and preserve the latest recovery baseline | finished | commit: b36a76a |
-| 19 | Add red tests and API contract changes for selectable next actions, planner confirmation, mode switching, target-agent switching, and invalid transition handling | notrun | commit: pending |
-| 20 | Extend agent-core and governance contracts to support user-directed transitions, dynamic next-step selection, and allowed-agent validation at checkpoints | notrun | commit: pending |
-| 21 | Implement API and boot-server transport changes so clients can select planner, coder, reviewer, or a specific allowed agent from checkpoint state and observe those options over SSE | notrun | commit: pending |
-| 22 | Update docs, refresh final diagrams for the new interaction model, run full verification, sync bookkeeping, and finalize the user-directed multi-agent flow | notrun | commit: pending |
+| 19 | Add red tests and API contract changes for selectable next actions, planner confirmation, mode switching, target-agent switching, and invalid transition handling | finished | commit: e651b06 |
+| 20 | Extend agent-core and governance contracts to support user-directed transitions, dynamic next-step selection, and allowed-agent validation at checkpoints | finished | commit: e651b06 |
+| 21 | Implement API and boot-server transport changes so clients can select planner, coder, reviewer, or a specific allowed agent from checkpoint state and observe those options over SSE | finished | commit: e651b06 |
+| 22 | Update docs, refresh final diagrams for the new interaction model, run full verification, sync bookkeeping, and finalize the user-directed multi-agent flow | running | commit: pending |
 
 ## Update Log
 | time | status | process | update |
@@ -89,10 +89,14 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 | 2026-03-13 00:19:39 +0800 | finished | 100% | task bookkeeping synchronized after docs checkpoint `c48aff9`; the configuration-driven runtime-selection architecture is fully closed |
 | 2026-03-13 14:35:00 +0800 | finished | 100% | refreshed the final diagrams to match the latest controller/application-service split, SSE replay/live behavior, and the current route-driven checkpoint model instead of implying a fully free-form Plan to Code to Review mode switch |
 | 2026-03-13 09:30:07 +0800 | running | 10% | scope changed again: reopen the finished configuration-driven runtime task toward the real user-directed transition model where planner completion requires explicit user confirmation and the user can choose the next mode or allowed agent at each checkpoint; the latest completed recovery baseline remains the current implementation chain ending at `18dfc6d` |
+| 2026-03-13 09:42:00 +0800 | running | 30% | step 19 started; added red tests for checkpoint next-action selection, planner-to-review switching, explicit agent switching, invalid selection requests, and HTTP/SSE contract changes for user-directed transitions |
+| 2026-03-13 09:51:00 +0800 | running | 75% | steps 20 and 21 are functionally in place: agent-core now exposes `AgentRunTransition` and `AgentRunAvailableAction`, governance mutates route history from user-selected actions, API responses expose `selectedRouteSteps` and `availableNextActions`, and resume requests carry `nextRole`, `nextAgentId`, or `complete=true` |
+| 2026-03-13 09:55:28 +0800 | running | 92% | targeted reactor verification passed for agent-core, governance, api, boot-local, and boot-server after the explicit transition contract replaced the fixed planner-to-coder auto-advance model |
+| 2026-03-13 09:57:54 +0800 | running | 96% | checkpoint `e651b06` completed steps 19 to 21: user-directed transitions are now modeled in agent-core, enforced in governance, exposed through API responses and SSE metadata, and covered by unit plus integration tests |
 
-## Current Baseline Sequence Diagram
+## Final Sequence Diagram
 
-Current implemented baseline: `POST /api/agent-runs` creates the run and immediately starts event-driven execution. The SSE transport is established by `GET /api/agent-runs/{runId}/events` after the client receives `runId`; the server first replays `AgentRunSnapshot.events()` and then streams live events, so planner output is not lost even if the SSE connection is opened after run creation. The current implementation is still route-driven: `StageRoutingAgentRouter` selects the stage pipeline from `TaskMode` up front, and user feedback resumes the next checkpoint on that selected route instead of arbitrarily switching the same run to a new mode. This baseline will be replaced after the new user-directed transition model is implemented.
+Current implemented flow: `POST /api/agent-runs` creates the run and immediately executes only the first selected step. In the default full-flow case that first step is planner, and the run then pauses with explicit `availableNextActions`. The client can open SSE after creation, receive replay plus live events, inspect the selectable actions, and then choose the next role, a specific allowed agent, or `complete=true`. Governance appends the selected step into the run history and continues execution from that user-selected checkpoint instead of following one fixed backend-controlled `Planner -> Coder -> Reviewer` pipeline.
 
 ```mermaid
 sequenceDiagram
@@ -105,8 +109,7 @@ sequenceDiagram
     participant Runtime as "LocalRuntimeComponentResolver"
     participant Router as "StageRoutingAgentRouter"
     participant Planner as "NativePlannerAgent"
-    participant Coder as "NativeCoderAgent"
-    participant Reviewer as "NativeReviewerAgent"
+    participant Selected as "User-selected Agent"
     participant Tool as "ToolGateway"
 
     Client->>Http: POST /api/agent-runs
@@ -115,10 +118,10 @@ sequenceDiagram
     Gateway->>Space: resolve(spaceId)
     Gateway->>Runtime: resolve(space runtime bindings)
     Gateway->>Router: route(task.mode, targetAgentId, allowedAgents)
-    Gateway->>Planner: execute first route step
+    Gateway->>Planner: execute initial selected step
     Planner-->>Gateway: plan and decision
-    Gateway-->>Broker: publish RUN_CREATED to AWAITING_USER
-    Api-->>Http: AgentRunResponse(runId, sessionId, eventsPath)
+    Gateway-->>Broker: publish RUN_CREATED .. AWAITING_USER
+    Api-->>Http: AgentRunResponse(runId, sessionId, selectedRouteSteps, availableNextActions, eventsPath)
     Http-->>Client: 201 Created
 
     Client->>Http: GET /api/agent-runs/{runId}/events
@@ -132,26 +135,26 @@ sequenceDiagram
 
     loop Each checkpoint resume
         Client->>Http: POST /api/agent-runs/{runId}/messages
-        Http->>Api: resumeRun(runId, feedback, Broker::publish)
-        Api->>Gateway: resume(runId, feedback, observer)
-        alt Next selected step is coder
-            Gateway->>Coder: execute next route step
-            Coder->>Tool: execute selected tools
-            Tool-->>Coder: tool results
-            Coder-->>Gateway: artifact and decision
-            Gateway-->>Broker: publish USER_FEEDBACK_RECEIVED to AWAITING_USER
-        else Next selected step is reviewer
-            Gateway->>Reviewer: execute next route step
-            Reviewer-->>Gateway: review artifact and decision
-            Gateway-->>Broker: publish USER_FEEDBACK_RECEIVED to RUN_COMPLETED
+        Http->>Api: resumeRun(runId, {content, nextRole|nextAgentId|complete}, Broker::publish)
+        Api->>Gateway: resume(runId, AgentRunTransition, observer)
+        alt User selected complete=true
+            Gateway-->>Broker: publish USER_FEEDBACK_RECEIVED .. RUN_COMPLETED
+        else User selected one allowed agent or role
+            Gateway->>Selected: execute selected route step
+            opt Selected agent uses tools
+                Selected->>Tool: execute selected tools
+                Tool-->>Selected: tool results
+            end
+            Selected-->>Gateway: artifact, decision, or review result
+            Gateway-->>Broker: publish USER_FEEDBACK_RECEIVED .. AWAITING_USER or RUN_COMPLETED
         end
-        Http-->>Client: 200 AgentRunResponse
+        Http-->>Client: 200 AgentRunResponse(selectedRouteSteps, availableNextActions)
         Broker-->>Http: live stage events
         Http-->>Client: SSE live updates
     end
 ```
 
-## Current Baseline Module Relationship Diagram
+## Final Module Relationship Diagram
 
 ```mermaid
 flowchart LR
@@ -162,7 +165,7 @@ flowchart LR
     Api --> Gov["intentforge-governance<br/>DefaultAgentRunGateway<br/>StageRoutingAgentRouter"]
     Local --> Resolver["LocalRuntimeComponentResolver<br/>per-run runtime selection"]
     Resolver --> Gov
-    Gov --> Core["intentforge-agent-core<br/>AgentTask<br/>ContextPack<br/>AgentRunSnapshot<br/>AgentRunEvent"]
+    Gov --> Core["intentforge-agent-core<br/>AgentTask<br/>ContextPack<br/>AgentRunSnapshot<br/>AgentRunEvent<br/>AgentRunTransition<br/>AgentRunAvailableAction"]
     Gov --> Space["intentforge-space<br/>SpaceResolver<br/>ResolvedSpaceProfile"]
     Gov --> Native["intentforge-agent-native<br/>Planner<br/>Coder<br/>Reviewer"]
     Native --> Tool["intentforge-tool<br/>ToolGateway"]
@@ -173,4 +176,7 @@ flowchart LR
     Catalog --> Provider["intentforge-model-provider"]
     Catalog --> Tool
     Space --> Config
+    Gov --> Snapshot["Run snapshot<br/>selectedRouteSteps<br/>availableNextActions"]
+    Snapshot --> Api
+    Server --> Client
 ```
