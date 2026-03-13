@@ -23,7 +23,7 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 ## Overall Status
 - status: finished
 - process: 100%
-- current_step: 17
+- current_step: completed
 
 ## Steps
 | step | description | status | note |
@@ -44,7 +44,7 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 | 14 | Add red tests and core contracts for config-managed runtime binding models, space inheritance of runtime selectors, and runtime catalog discovery | finished | commits: a73ea1f, ccf6918 |
 | 15 | Implement config-core models, space/runtime binding resolution, and bootstrap runtime catalog assembly without global hardcoded implementation winners | finished | commit: 7d3afc7 |
 | 16 | Propagate selected runtime bindings into governance, context pack, run snapshot, events, and API-facing observability models | finished | commit: 7d3afc7 |
-| 17 | Update architecture/docs, run full verification, sync task bookkeeping, and finalize the configuration-driven runtime-selection architecture | finished | commits: 70f3799, c48aff9 |
+| 17 | Update architecture/docs, run full verification, sync task bookkeeping, and finalize the configuration-driven runtime-selection architecture | finished | commits: 70f3799, c48aff9, pending |
 
 ## Update Log
 | time | status | process | update |
@@ -77,71 +77,89 @@ Starting from the completed event-driven native Java coding agent runtime and mi
 | 2026-03-13 00:17:27 +0800 | running | 90% | checkpoint `7d3afc7` completed steps 15 and 16: `config-core` now defines `SpaceConfiguration` and `ResolvedRuntimeSelection`, `boot-local` assembles runtime catalogs plus component registries, governance resolves prompt/model/provider/tool per run from `SpaceProfile.runtimeBindings`, and HTTP responses now expose selected runtimes; docs sync and full `make test` remain |
 | 2026-03-13 00:18:45 +0800 | finished | 100% | architecture docs, OpenAPI contract, config README, and task bookkeeping have been updated; `make test` now passes across the full reactor after test checkpoint `70f3799` stabilized unordered runtime-selection responses |
 | 2026-03-13 00:19:39 +0800 | finished | 100% | task bookkeeping synchronized after docs checkpoint `c48aff9`; the configuration-driven runtime-selection architecture is fully closed |
+| 2026-03-13 14:35:00 +0800 | finished | 100% | refreshed the final diagrams to match the latest controller/application-service split, SSE replay/live behavior, and the current route-driven checkpoint model instead of implying a fully free-form Plan to Code to Review mode switch |
 
 ## Sequence Diagram
 
+Current behavior: `POST /api/agent-runs` creates the run and immediately starts event-driven execution. The SSE transport is established by `GET /api/agent-runs/{runId}/events` after the client receives `runId`; the server first replays `AgentRunSnapshot.events()` and then streams live events, so planner output is not lost even if the SSE connection is opened after run creation. The current implementation is still route-driven: `StageRoutingAgentRouter` selects the stage pipeline from `TaskMode` up front, and user feedback resumes the next checkpoint on that selected route instead of arbitrarily switching the same run to a new mode. If the product requirement becomes "start in plan mode and only switch to coder after explicit user approval", that needs a future route-mutation or follow-up-run capability rather than the current fixed route selection.
+
 ```mermaid
 sequenceDiagram
-    actor User as Terminal User
-    participant Main as AiAssetServerMain
-    participant Server as AiAssetServerBootstrap
-    participant Local as AiAssetLocalBootstrap
-    participant Api as AgentRunHttpApi
-    participant Broker as AgentRunEventBroker
-    participant Gateway as DefaultAgentRunGateway
-    participant Router as StageRoutingAgentRouter
-    participant Planner as NativePlannerAgent
-    participant Coder as NativeCoderAgent
-    participant Reviewer as NativeReviewerAgent
-    participant Tool as ToolGateway
+    actor Client as "Client or UI"
+    participant Http as "boot-server HttpExchange Handler"
+    participant Api as "api Controller and ApplicationService"
+    participant Broker as "AgentRunEventBroker"
+    participant Gateway as "DefaultAgentRunGateway"
+    participant Space as "SpaceResolver"
+    participant Runtime as "LocalRuntimeComponentResolver"
+    participant Router as "StageRoutingAgentRouter"
+    participant Planner as "NativePlannerAgent"
+    participant Coder as "NativeCoderAgent"
+    participant Reviewer as "NativeReviewerAgent"
+    participant Tool as "ToolGateway"
 
-    User->>Main: start server
-    Main->>Server: bootstrap(host, port, plugins, null, null)
-    Server->>Local: bootstrap local runtime
-    Server->>Api: wire HTTP + SSE handlers
+    Client->>Http: POST /api/agent-runs
+    Http->>Api: createRun(request, Broker::publish)
+    Api->>Gateway: start(task, observer)
+    Gateway->>Space: resolve(spaceId)
+    Gateway->>Runtime: resolve(space runtime bindings)
+    Gateway->>Router: route(task.mode, targetAgentId, allowedAgents)
+    Gateway->>Planner: execute first route step
+    Planner-->>Gateway: plan and decision
+    Gateway-->>Broker: publish RUN_CREATED to AWAITING_USER
+    Api-->>Http: AgentRunResponse(runId, sessionId, eventsPath)
+    Http-->>Client: 201 Created
 
-    User->>Api: POST /api/agent-runs
-    Api->>Gateway: start(task, Broker::publish)
-    Gateway->>Router: route(task, context, agents)
-    Gateway->>Planner: execute(context, state0)
-    Planner-->>Gateway: plan + decision
-    Gateway-->>Broker: RUN_CREATED..AWAITING_USER
-    Api-->>User: 201 AgentRunResponse
+    Client->>Http: GET /api/agent-runs/{runId}/events
+    Http->>Api: getRunSnapshot(runId)
+    Api->>Gateway: get(runId)
+    Gateway-->>Api: snapshot with stored events
+    Http-->>Client: replay snapshot.events as SSE
+    Http->>Broker: subscribe(runId)
+    Broker-->>Http: live event queue
+    Http-->>Client: continue streaming live SSE events
 
-    User->>Api: GET /api/agent-runs/{runId}/events
-    Api-->>User: replay historical SSE events
-
-    User->>Api: POST /api/agent-runs/{runId}/messages
-    Api->>Gateway: resume(runId, feedback, Broker::publish)
-    Gateway->>Coder: execute(context, state1)
-    Coder->>Tool: fs/env tool calls
-    Tool-->>Coder: tool results
-    Coder-->>Gateway: artifact + decision
-    Gateway-->>Broker: USER_FEEDBACK_RECEIVED..AWAITING_USER
-    Broker-->>User: live SSE events
-    Api-->>User: 200 AgentRunResponse
-
-    User->>Api: POST /api/agent-runs/{runId}/messages
-    Api->>Gateway: resume(runId, feedback, Broker::publish)
-    Gateway->>Reviewer: execute(context, state2)
-    Reviewer-->>Gateway: review artifact + decision
-    Gateway-->>Broker: USER_FEEDBACK_RECEIVED..RUN_COMPLETED
-    Broker-->>User: live SSE events
-    Api-->>User: 200 AgentRunResponse
+    loop Each checkpoint resume
+        Client->>Http: POST /api/agent-runs/{runId}/messages
+        Http->>Api: resumeRun(runId, feedback, Broker::publish)
+        Api->>Gateway: resume(runId, feedback, observer)
+        alt Next selected step is coder
+            Gateway->>Coder: execute next route step
+            Coder->>Tool: execute selected tools
+            Tool-->>Coder: tool results
+            Coder-->>Gateway: artifact and decision
+            Gateway-->>Broker: publish USER_FEEDBACK_RECEIVED to AWAITING_USER
+        else Next selected step is reviewer
+            Gateway->>Reviewer: execute next route step
+            Reviewer-->>Gateway: review artifact and decision
+            Gateway-->>Broker: publish USER_FEEDBACK_RECEIVED to RUN_COMPLETED
+        end
+        Http-->>Client: 200 AgentRunResponse
+        Broker-->>Http: live stage events
+        Http-->>Client: SSE live updates
+    end
 ```
 
 ## Module Relationship Diagram
 
 ```mermaid
 flowchart LR
-    Client[Terminal Client or curl] --> Api[intentforge-boot-server]
-    Api --> Dto[intentforge-api]
-    Api --> Local[intentforge-boot-local]
-    Api --> Gov[intentforge-governance]
-    Gov --> Core[intentforge-agent-core]
-    Gov --> Native[intentforge-agent-native]
-    Native --> Tool[intentforge-tool]
-    Gov --> Session[intentforge-session]
-    Gov --> Space[intentforge-space]
-    Gov --> PromptModel[prompt model provider]
+    Client["Client or curl"] --> Server["intentforge-boot-server<br/>AiAssetServerBootstrap<br/>AgentRunHttpExchangeHandler<br/>AgentRunEventBroker"]
+    Server --> Api["intentforge-api<br/>AgentRunController<br/>AgentRunApplicationService<br/>DTO and error mapping"]
+    Server --> Local["intentforge-boot-local<br/>AiAssetLocalBootstrap"]
+    Api --> Session["intentforge-session<br/>SessionManager"]
+    Api --> Gov["intentforge-governance<br/>DefaultAgentRunGateway<br/>StageRoutingAgentRouter"]
+    Local --> Resolver["LocalRuntimeComponentResolver<br/>per-run runtime selection"]
+    Resolver --> Gov
+    Gov --> Core["intentforge-agent-core<br/>AgentTask<br/>ContextPack<br/>AgentRunSnapshot<br/>AgentRunEvent"]
+    Gov --> Space["intentforge-space<br/>SpaceResolver<br/>ResolvedSpaceProfile"]
+    Gov --> Native["intentforge-agent-native<br/>Planner<br/>Coder<br/>Reviewer"]
+    Native --> Tool["intentforge-tool<br/>ToolGateway"]
+    Local --> Catalog["RuntimeCatalog and ComponentRegistry"]
+    Catalog --> Config["intentforge-config<br/>SpaceConfiguration<br/>RuntimeBindings<br/>ResolvedRuntimeSelection"]
+    Catalog --> Prompt["intentforge-prompt"]
+    Catalog --> Model["intentforge-model"]
+    Catalog --> Provider["intentforge-model-provider"]
+    Catalog --> Tool
+    Space --> Config
 ```
