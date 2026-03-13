@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>cn.intentforge</groupId>
@@ -25,6 +25,7 @@
     <maven.surefire.plugin.version>3.5.5</maven.surefire.plugin.version>
     <maven.enforcer.plugin.version>3.6.2</maven.enforcer.plugin.version>
     <flatten.maven.plugin.version>1.7.3</flatten.maven.plugin.version>
+    <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
   </properties>
 
   <modules>
@@ -62,58 +63,80 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${maven.surefire.plugin.version}</version>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${maven-jar-plugin.version}</version>
+          <configuration>
+            <archive>
+              <manifest>
+                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              </manifest>
+            </archive>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>${maven.enforcer.plugin.version}</version>
+          <executions>
+            <execution>
+              <id>enforce-runtime-baseline</id>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <rules>
+                  <requireJavaVersion>
+                    <version>[25,)</version>
+                  </requireJavaVersion>
+                  <requireMavenVersion>
+                    <version>[3.9,)</version>
+                  </requireMavenVersion>
+                </rules>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>flatten-maven-plugin</artifactId>
+          <version>${flatten.maven.plugin.version}</version>
+          <inherited>true</inherited>
+          <configuration>
+            <flattenMode>resolveCiFriendliesOnly</flattenMode>
+            <updatePomFile>false</updatePomFile>
+          </configuration>
+          <executions>
+            <execution>
+              <id>flatten</id>
+              <phase>process-resources</phase>
+              <goals>
+                <goal>flatten</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>flatten-clean</id>
+              <phase>clean</phase>
+              <goals>
+                <goal>clean</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
 
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+      </plugin>
+      <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>${maven.enforcer.plugin.version}</version>
-        <executions>
-          <execution>
-            <id>enforce-runtime-baseline</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <requireJavaVersion>
-                  <version>[25,)</version>
-                </requireJavaVersion>
-                <requireMavenVersion>
-                  <version>[3.9,)</version>
-                </requireMavenVersion>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>flatten-maven-plugin</artifactId>
-        <version>${flatten.maven.plugin.version}</version>
-        <inherited>true</inherited>
-        <configuration>
-          <flattenMode>resolveCiFriendliesOnly</flattenMode>
-          <updatePomFile>false</updatePomFile>
-        </configuration>
-        <executions>
-          <execution>
-            <id>flatten</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>flatten</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>flatten-clean</id>
-            <phase>clean</phase>
-            <goals>
-              <goal>clean</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
