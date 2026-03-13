@@ -369,6 +369,8 @@ components:
         - id
         - capability
         - displayName
+        - implementationClass
+        - metadata
       properties:
         id:
           type: string
